@@ -1,7 +1,7 @@
 <?php
 /*
  Plugin Name: Revisionize
- Plugin URI: http://jamiechong.ca
+ Plugin URI: https://github.com/jamiechong/revisionize
  Description: Clone posts and pages.
  Version: 1.0
  Author: Jamie Chong
