@@ -2,7 +2,7 @@
 /*
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
- Description: Clone posts and pages.
+ Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system. 
  Version: 1.0
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
