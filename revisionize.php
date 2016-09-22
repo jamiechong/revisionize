@@ -35,9 +35,25 @@ if (is_admin() || revisionize_is_cron()) {
   add_filter('post_row_actions', 'revisionize_admin_actions', 10, 2);
   add_filter('page_row_actions', 'revisionize_admin_actions', 10, 2);
 
+  add_action('post_submitbox_start', 'revisionize_post_button');
+
   add_action('admin_action_revisionize_create', 'revisionize_create');
   add_action('transition_post_status', 'revisionize_on_publish_post', 10, 3);
 }
+
+
+
+function revisionize_post_button() {
+  global $post;
+  if (revisionize_is_create_enabled($post)): ?>
+    <div style="text-align: right; margin-bottom: 10px;">
+      <a class="submitduplicate duplication button"
+        href="<?php echo revisionize_get_create_link($post) ?>"><?php _e('Revisionize', REVISIONIZE_I18N_DOMAIN); ?>
+      </a>
+    </div>
+  <?php endif;
+}
+
 
 function revisionize_is_cron() {
   return defined('DOING_CRON') && DOING_CRON;
@@ -87,12 +103,20 @@ function revisionize_create() {
   wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN)); 
 }
 
+function revisionize_is_create_enabled($post) {
+  return !get_post_meta($post->ID, '_post_revision_of');
+}
 
+function revisionize_get_create_link($post) {
+  return admin_url("admin.php?action=revisionize_create&post=".$post->ID);
+}
 
 function revisionize_admin_actions ($actions, $post) {
-  $actions['create_revision'] = '<a href="'.admin_url("admin.php?action=revisionize_create&post=".$post->ID).'" title="'
-    . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
-    . '">' .  __('Create Revision', REVISIONIZE_I18N_DOMAIN) . '</a>';
+  if (revisionize_is_create_enabled($post)) {
+    $actions['create_revision'] = '<a href="'.revisionize_get_create_link($post).'" title="'
+      . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
+      . '">' .  __('Revisionize', REVISIONIZE_I18N_DOMAIN) . '</a>';
+  }
   return $actions;
 }
 
