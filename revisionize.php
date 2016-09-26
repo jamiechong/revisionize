@@ -26,6 +26,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+// TODO 
+// - Add banner to the top of the edit post screen if the post is a Revision. 
+// - Allow Revisions to revisionize, but copy them and make them a revision of the revision's parent. 
+// - Screenshots
+// - Readme 
+
+
 namespace Revisionize;
 
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
