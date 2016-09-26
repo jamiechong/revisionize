@@ -26,102 +26,65 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+namespace Revisionize;
 
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
 
+add_action('init', __NAMESPACE__.'\\init');
 
-if (is_admin() || revisionize_is_cron()) {
-  add_filter('display_post_states', 'revisionize_post_status_label');
-  add_filter('post_row_actions', 'revisionize_admin_actions', 10, 2);
-  add_filter('page_row_actions', 'revisionize_admin_actions', 10, 2);
+function init() {
+  // Only add filters and actions for admin who can actually edit posts
+  if (is_admin() && user_can_revisionize()) {
+    add_filter('display_post_states', __NAMESPACE__.'\\post_status_label');
+    add_filter('post_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
+    add_filter('page_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
 
-  add_action('post_submitbox_start', 'revisionize_post_button');
-
-  add_action('admin_action_revisionize_create', 'revisionize_create');
-  add_action('transition_post_status', 'revisionize_on_publish_post', 10, 3);
-}
-
-
-
-function revisionize_post_button() {
-  global $post;
-  if (revisionize_is_create_enabled($post)): ?>
-    <div style="text-align: right; margin-bottom: 10px;">
-      <a class="submitduplicate duplication button"
-        href="<?php echo revisionize_get_create_link($post) ?>"><?php _e('Revisionize', REVISIONIZE_I18N_DOMAIN); ?>
-      </a>
-    </div>
-  <?php endif;
-}
-
-
-function revisionize_is_cron() {
-  return defined('DOING_CRON') && DOING_CRON;
-}
-
-function revisionize_is_ajax() {
-  return defined( 'DOING_AJAX' ) && DOING_AJAX;
-}
-
-function revisionize_post_status_label($states) {
-  global $post;
-  if (get_post_meta($post->ID, '_post_revision_of')) {
-    array_unshift($states, 'Revision');
+    add_action('post_submitbox_start', __NAMESPACE__.'\\post_button');
+    add_action('admin_action_revisionize_create', __NAMESPACE__.'\\create');
   }
-  if (get_post_meta($post->ID, '_post_original')) {
-    array_unshift($states, 'Original');
+
+  // For Cron and users who can publish
+  if (is_admin() && user_can_publish_revision() || is_cron()) {
+    add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
   }
-  return $states;
 }
 
-function revisionize_on_publish_post($new_status, $old_status, $post) {
+// Action for transition_post_status. Will publish the revision only if user_can_publish_revision.
+function on_publish_post($new_status, $old_status, $post) {
   if ($post && $new_status == 'publish') {
     $id = get_post_meta($post->ID, '_post_revision_of', true);
     if ($id) {
       $original = get_post($id);
       if ($original) {
-        revisionize_publish($post, $original);
+        publish($post, $original);
       }
       
     }
   }
 }
 
-function revisionize_create() {
-  $id = $_REQUEST['post'];
+function create() {
+  $id = intval($_REQUEST['post']);
 
-  if ($id) {
-    $post = get_post($id);
+  // make sure the clicked link is a valid nonce. Make sure the user can revisionize. 
+  if (user_can_revisionize() && check_admin_referer('revisionize-create-'.$id)) {
+    if ($id) {
+      $post = get_post($id);
 
-    if ($post) {
-      $new_id = revisionize_create_revision($post);
-      wp_redirect(admin_url('post.php?action=edit&post=' . $new_id));
-      exit;
+      if ($post) {
+        $new_id = create_revision($post);
+        wp_redirect(admin_url('post.php?action=edit&post=' . $new_id));
+        exit;
+      }
     }
   }
+
   // if we didn't redirect out, then we fail.
   wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN)); 
 }
 
-function revisionize_is_create_enabled($post) {
-  return !get_post_meta($post->ID, '_post_revision_of');
-}
-
-function revisionize_get_create_link($post) {
-  return admin_url("admin.php?action=revisionize_create&post=".$post->ID);
-}
-
-function revisionize_admin_actions ($actions, $post) {
-  if (revisionize_is_create_enabled($post)) {
-    $actions['create_revision'] = '<a href="'.revisionize_get_create_link($post).'" title="'
-      . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
-      . '">' .  __('Revisionize', REVISIONIZE_I18N_DOMAIN) . '</a>';
-  }
-  return $actions;
-}
-
-function revisionize_create_revision($post, $is_original=false) {
-  $new_id = revisionize_copy_post($post, null, $post->ID);
+function create_revision($post, $is_original=false) {
+  $new_id = copy_post($post, null, $post->ID);
   update_post_meta($new_id, '_post_revision_of', $post->ID);     // mark the new post as a variation of the old post. 
   if ($is_original) {
     update_post_meta($new_id, '_post_original', true);
@@ -129,27 +92,29 @@ function revisionize_create_revision($post, $is_original=false) {
   return $new_id;
 }
 
-function revisionize_publish($post, $original) {
-  $clone_id = revisionize_create_revision($original, true);                           // keep a backup copy of the live post.
+function publish($post, $original) {
+  if (user_can_publish_revision()) {
+    $clone_id = create_revision($original, true);                           // keep a backup copy of the live post.
 
-  delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
-  delete_post_meta($post->ID, '_post_original');                          // remove the original tag so the meta isn't copied
-  revisionize_copy_post($post, $original, $original->post_parent);        // copy the variation into the live post
-  
-  wp_delete_post($post->ID, true);                                        // delete the variation
+    delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
+    delete_post_meta($post->ID, '_post_original');                          // remove the original tag so the meta isn't copied
+    copy_post($post, $original, $original->post_parent);        // copy the variation into the live post
+    
+    wp_delete_post($post->ID, true);                                        // delete the variation
 
-  if (!revisionize_is_ajax() && !revisionize_is_cron()) {
-    wp_redirect(admin_url('post.php?action=edit&post=' . $original->ID));   // take us back to the live post
-    exit;
-  }
+    if (!is_ajax() && !is_cron()) {
+      wp_redirect(admin_url('post.php?action=edit&post=' . $original->ID));   // take us back to the live post
+      exit;
+    }
 
-  if (revisionize_is_ajax()) {
-    echo "<script type='text/javascript'>location.reload();</script>";
+    if (is_ajax()) {
+      echo "<script type='text/javascript'>location.reload();</script>";
+    }
   }
 }
 
 
-function revisionize_copy_post($post, $to=null, $parent_id=null, $status='draft') {
+function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   if ($post->post_type == 'revision') {
     return;
   }
@@ -184,19 +149,19 @@ function revisionize_copy_post($post, $to=null, $parent_id=null, $status='draft'
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
     wp_update_post($data);
-    revisionize_clear_post_meta($new_id);  
+    clear_post_meta($new_id);  
   } else {
     $new_id = wp_insert_post($data);
   }
 
-  revisionize_copy_post_taxonomies($new_id, $post);
-  revisionize_copy_post_meta_info($new_id, $post);
+  copy_post_taxonomies($new_id, $post);
+  copy_post_meta_info($new_id, $post);
   
   return $new_id;
 }
 
 
-function revisionize_copy_post_taxonomies($new_id, $post) {
+function copy_post_taxonomies($new_id, $post) {
   global $wpdb;
 
   if (isset($wpdb->terms)) {
@@ -218,15 +183,14 @@ function revisionize_copy_post_taxonomies($new_id, $post) {
   }
 }
 
-function revisionize_clear_post_meta($id) {
+function clear_post_meta($id) {
   $meta_keys = get_post_custom_keys($id);
   foreach ($meta_keys as $meta_key) {
     delete_post_meta($id, $meta_key);
   }
 }
 
-
-function revisionize_copy_post_meta_info($new_id, $post) {
+function copy_post_meta_info($new_id, $post) {
   $meta_keys = get_post_custom_keys($post->ID);
 
   foreach ($meta_keys as $meta_key) {
@@ -238,3 +202,65 @@ function revisionize_copy_post_meta_info($new_id, $post) {
   }
 }
 
+// -- Admin UI (buttons, links, etc)
+
+// Action for post_submitbox_start which is only added if user_can_revisionize
+function post_button() {
+  global $post;
+  if (is_create_enabled($post)): ?>
+    <div style="text-align: right; margin-bottom: 10px;">
+      <a class="button"
+        href="<?php echo get_create_link($post) ?>"><?php _e('Revisionize', REVISIONIZE_I18N_DOMAIN); ?>
+      </a>
+    </div>
+  <?php endif;
+}
+
+// Filter for post_row_actions/page_row_actions which is only added if user_can_revisionize
+function admin_actions($actions, $post) {
+  if (is_create_enabled($post)) {
+    $actions['create_revision'] = '<a href="'.get_create_link($post).'" title="'
+      . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
+      . '">' .  __('Revisionize', REVISIONIZE_I18N_DOMAIN) . '</a>';
+  }
+  return $actions;
+}
+
+// Filter for display_post_states which is only added if user_can_revisionize
+function post_status_label($states) {
+  global $post;
+  if (get_post_meta($post->ID, '_post_revision_of')) {
+    array_unshift($states, 'Revision');
+  }
+  if (get_post_meta($post->ID, '_post_original')) {
+    array_unshift($states, 'Original');
+  }
+  return $states;
+}
+
+
+// -- Helpers
+
+function user_can_revisionize() {
+  return current_user_can('edit_posts');
+}
+
+function user_can_publish_revision() {
+  return current_user_can('publish_posts') || current_user_can('publish_pages');
+}
+
+function is_cron() {
+  return defined('DOING_CRON') && DOING_CRON;
+}
+
+function is_ajax() {
+  return defined( 'DOING_AJAX' ) && DOING_AJAX;
+}
+
+function is_create_enabled($post) {
+  return !get_post_meta($post->ID, '_post_revision_of');
+}
+
+function get_create_link($post) {
+  return wp_nonce_url(admin_url("admin.php?action=revisionize_create&post=".$post->ID), 'revisionize-create-'.$post->ID);
+}
