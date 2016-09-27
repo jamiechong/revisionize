@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 // TODO 
-// - Add banner to the top of the edit post screen if the post is a Revision. 
 // - Allow Revisions to revisionize, but copy them and make them a revision of the revision's parent. 
 // - Screenshots
 // - Readme 
@@ -48,18 +47,20 @@ function init() {
 
     add_action('post_submitbox_start', __NAMESPACE__.'\\post_button');
     add_action('admin_action_revisionize_create', __NAMESPACE__.'\\create');
+    add_action('admin_notices', __NAMESPACE__.'\\notice');
   }
 
   // For Cron and users who can publish
   if (is_admin() && user_can_publish_revision() || is_cron()) {
     add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
   }
+
 }
 
 // Action for transition_post_status. Will publish the revision only if user_can_publish_revision.
 function on_publish_post($new_status, $old_status, $post) {
   if ($post && $new_status == 'publish') {
-    $id = get_post_meta($post->ID, '_post_revision_of', true);
+    $id = get_revision_of($post);
     if ($id) {
       $original = get_post($id);
       if ($original) {
@@ -214,12 +215,15 @@ function copy_post_meta_info($new_id, $post) {
 // Action for post_submitbox_start which is only added if user_can_revisionize
 function post_button() {
   global $post;
-  if (is_create_enabled($post)): ?>
+  $parent = get_parent_post($post);
+  if (!$parent): ?>
     <div style="text-align: right; margin-bottom: 10px;">
       <a class="button"
         href="<?php echo get_create_link($post) ?>"><?php _e('Revisionize', REVISIONIZE_I18N_DOMAIN); ?>
       </a>
     </div>
+  <?php else: ?>
+    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.'), get_parent_editlink($parent, __('its original')))?></em></div>
   <?php endif;
 }
 
@@ -236,7 +240,7 @@ function admin_actions($actions, $post) {
 // Filter for display_post_states which is only added if user_can_revisionize
 function post_status_label($states) {
   global $post;
-  if (get_post_meta($post->ID, '_post_revision_of')) {
+  if (get_revision_of($post)) {
     array_unshift($states, 'Revision');
   }
   if (get_post_meta($post->ID, '_post_original')) {
@@ -245,6 +249,17 @@ function post_status_label($states) {
   return $states;
 }
 
+function notice() {
+  global $post;
+  $parent = get_parent_post($post);
+  if ($parent):
+  ?>
+  <div class="notice notice-warning">
+      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', REVISIONIZE_I18N_DOMAIN), get_parent_permalink($parent)); ?></p>
+  </div>
+  <?php
+  endif;
+}
 
 // -- Helpers
 
@@ -265,9 +280,26 @@ function is_ajax() {
 }
 
 function is_create_enabled($post) {
-  return !get_post_meta($post->ID, '_post_revision_of');
+  return !get_revision_of($post);
+}
+
+function get_revision_of($post) {
+  return get_post_meta($post->ID, '_post_revision_of', true);
 }
 
 function get_create_link($post) {
   return wp_nonce_url(admin_url("admin.php?action=revisionize_create&post=".$post->ID), 'revisionize-create-'.$post->ID);
+}
+
+function get_parent_editlink($parent, $s=null) {
+  return sprintf('<a href="%s">%s</a>', get_edit_post_link($parent->ID), $s ? $s : $parent->post_title);
+}
+
+function get_parent_permalink($parent) {
+  return sprintf('<a href="%s" target="_blank">%s</a>', get_permalink($parent->ID), $parent->post_title);
+}
+
+function get_parent_post($post) {
+  $id = $post ? get_revision_of($post) : false;
+  return $id ? get_post($id) : false;
 }
