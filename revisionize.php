@@ -252,7 +252,8 @@ function post_status_label($states) {
 function notice() {
   global $post;
   $parent = get_parent_post($post);
-  if ($parent):
+  $screen = get_current_screen();
+  if ($screen->base == 'post' && $parent):
   ?>
   <div class="notice notice-warning">
       <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', REVISIONIZE_I18N_DOMAIN), get_parent_permalink($parent)); ?></p>
