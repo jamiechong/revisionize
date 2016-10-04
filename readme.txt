@@ -7,7 +7,7 @@ Stable tag: 1.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Draft up revisions or variations of live, published content. Publish the drafted content manually or with the built-in scheduling system. All links to the original post are maintained.
+Draft up revisions or variations of live, published content. Publish the drafted content manually or with the built-in scheduling system.
 
 == Description ==
 
