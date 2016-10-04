@@ -101,7 +101,7 @@ function create_revision($post, $is_original=false) {
 }
 
 function publish($post, $original) {
-  if (user_can_publish_revision()) {
+  if (user_can_publish_revision() || is_cron()) {
     $clone_id = create_revision($original, true);                           // keep a backup copy of the live post.
 
     delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
