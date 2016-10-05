@@ -48,6 +48,8 @@ function init() {
     add_action('post_submitbox_start', __NAMESPACE__.'\\post_button');
     add_action('admin_action_revisionize_create', __NAMESPACE__.'\\create');
     add_action('admin_notices', __NAMESPACE__.'\\notice');
+
+    add_action('before_delete_post', __NAMESPACE__.'\\on_delete_post');
   }
 
   // For Cron and users who can publish
@@ -80,7 +82,7 @@ function create() {
       $post = get_post($id);
 
       if ($post) {
-        $new_id = create_revision($post);
+        $new_id = create_revision($post, !is_revision_post($post) || is_original_post($post));
         wp_redirect(admin_url('post.php?action=edit&post=' . $new_id));
         exit;
       }
@@ -93,21 +95,29 @@ function create() {
 
 function create_revision($post, $is_original=false) {
   $new_id = copy_post($post, null, $post->ID);
-  update_post_meta($new_id, '_post_revision_of', $post->ID);     // mark the new post as a variation of the old post. 
+  update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post. 
+  update_post_meta($new_id, '_post_revision', true);
+  
   if ($is_original) {
-    update_post_meta($new_id, '_post_original', true);
+    update_post_meta($post->ID, '_post_original', true);
+    delete_post_meta($new_id, '_post_original');                    // a revision is never an original
+  } else {
+    delete_post_meta($post->ID, '_post_original');
   }
+
   return $new_id;
 }
 
 function publish($post, $original) {
   if (user_can_publish_revision() || is_cron()) {
-    $clone_id = create_revision($original, true);                           // keep a backup copy of the live post.
+    $clone_id = create_revision($original);    // keep a backup copy of the live post.
 
     delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
-    delete_post_meta($post->ID, '_post_original');                          // remove the original tag so the meta isn't copied
-    copy_post($post, $original, $original->post_parent);        // copy the variation into the live post
-    
+    copy_post($post, $original, $original->post_parent);                    // copy the variation into the live post
+
+    delete_post_meta($post->ID, '_post_original');                          // original tag is copied, but remove from source.
+
+
     wp_delete_post($post->ID, true);                                        // delete the variation
 
     if (!is_ajax() && !is_cron()) {
@@ -121,6 +131,14 @@ function publish($post, $original) {
   }
 }
 
+// if we delete the original post, make the current parent the new original. 
+function on_delete_post($post_id) {
+  $post = get_post($post_id);
+  $parent_id = get_revision_of($post);
+  if ($parent_id && is_original_post($post)) {
+    update_post_meta($parent_id, '_post_original', true);
+  }
+}
 
 function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   if ($post->post_type == 'revision') {
@@ -243,7 +261,7 @@ function post_status_label($states) {
   if (get_revision_of($post)) {
     array_unshift($states, 'Revision');
   }
-  if (get_post_meta($post->ID, '_post_original')) {
+  if (is_original_post($post) && get_revision_of($post)) {
     array_unshift($states, 'Original');
   }
   return $states;
@@ -283,6 +301,15 @@ function is_ajax() {
 function is_create_enabled($post) {
   return !get_revision_of($post);
 }
+
+function is_original_post($post) {
+  return get_post_meta($post->ID, '_post_original', true);
+}
+
+function is_revision_post($post) {
+  return get_post_meta($post->ID, '_post_revision', true);
+}
+
 
 function get_revision_of($post) {
   return get_post_meta($post->ID, '_post_revision_of', true);
