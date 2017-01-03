@@ -2,7 +2,7 @@
 Contributors: jamiechong
 Tags: revision, cms, content, staging, stage, draft, variation, scheduling, schedule, change, clone, preview
 Requires at least: 4.4
-Tested up to: 4.6.1
+Tested up to: 4.7
 Stable tag: trunk
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
