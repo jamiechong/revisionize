@@ -31,3 +31,14 @@ Please post in the support section for help before leaving a negative review!
 3. A Revision. Save as many drafts as you wish. Preview the post to see how it looks. Or delete it if you don't want it. When the revision is published, it will overwrite its original. But don't worry, the original is saved as another revision (for a backup). 
 4. Schedule multiple revisions/variations to be published consecutively. The URL of the post stays the same, the content will just update at the scheduled time. No redirects or messing around with slugs. 
 5. The original post is kept around as a revision just in case you want to revert back to the way things were. 
+
+== Changelog ==
+
+= 1.1.0 =
+* Only allow users to Revisionize posts that they can also edit. [Related discussion](https://wordpress.org/support/topic/permissionscapability-issue/)
+* The author of the original post is maintained when a Revision is published - it doesn't get set to the author of the user who created the Revision. 
+
+== Upgrade Notice ==
+
+= 1.1.0 = 
+Fixed a permission issue where users could Revisionize and overwrite a post they don't have write access to.
