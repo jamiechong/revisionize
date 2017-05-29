@@ -54,11 +54,28 @@ function init() {
 
   // For Cron and users who can publish
   if (is_admin() && user_can_publish_revision() || is_cron()) {
-    add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
+    if (has_action( 'acf/save_post' ) ) { // for users with ACF
+    		add_action('acf/save_post', __NAMESPACE__.'\\ACF_on_publish_post', 130, 1);
+	   } else { // Everyone else
+    		add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
+	   }
   }
 
 }
-
+// Action for ACF users. Will publish the revision only if user_can_publish_revision.
+function ACF_on_publish_post($post_id) {
+	$post = get_post($post_id);
+	$new_status = get_post_status($post_id);
+  	if($post && $new_status == 'publish') {
+     $id = get_revision_of($post);
+     if ($id) {
+        $original = get_post($id);
+        if ($original) {
+        publish($post, $original);
+      }
+    }
+  }
+}
 // Action for transition_post_status. Will publish the revision only if user_can_publish_revision.
 function on_publish_post($new_status, $old_status, $post) {
   if ($post && $new_status == 'publish') {
