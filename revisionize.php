@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system. 
- Version: 1.1.0
+ Version: 1.2.0
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -25,12 +25,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
-// TODO 
-// - Allow Revisions to revisionize, but copy them and make them a revision of the revision's parent. 
-// - Screenshots
-// - Readme 
-
 
 namespace Revisionize;
 
@@ -54,11 +48,11 @@ function init() {
 
   // For Cron and users who can publish
   if (is_admin() && user_can_publish_revision() || is_cron()) {
-    if (has_action( 'acf/save_post' ) ) { // for users with ACF
-        add_action('acf/save_post', __NAMESPACE__.'\\acf_on_publish_post', 130, 1);
-     } else { // Everyone else
-        add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
-     }
+    if (!is_cron() && has_action('acf/save_post')) { // for users with ACF
+      add_action('acf/save_post', __NAMESPACE__.'\\acf_on_publish_post', 130, 1);
+    } else { // Cron and everyone else
+      add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
+    }
   }
 
 }

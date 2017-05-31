@@ -34,6 +34,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 1.2.0 =
+* Fix [known issue](https://github.com/jamiechong/revisionize/issues/1) where direct publishing of a Revision that has ACF would not actually update the fields. Thanks for the help @thegaffney
+
 = 1.1.0 =
 * Only allow users to Revisionize posts that they can also edit. [Related discussion](https://wordpress.org/support/topic/permissionscapability-issue/)
 * The author of the original post is maintained when a Revision is published - it doesn't get set to the author of the user who created the Revision. 
