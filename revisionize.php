@@ -179,6 +179,8 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     'post_date_gmt' => get_gmt_from_date($post->post_date)
   );
 
+  kses_remove_filters();
+
   if ($to) {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
@@ -190,7 +192,9 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   copy_post_taxonomies($new_id, $post);
   copy_post_meta_info($new_id, $post);
-  
+
+  kses_init_filters();
+
   return $new_id;
 }
 
