@@ -34,6 +34,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 1.2.1 = 
+* Fix issue where post titles containing ampersands are escaped when a revision is scheduled with cron. Thanks @piscis.
+
 = 1.2.0 =
 * Fix [known issue](https://github.com/jamiechong/revisionize/issues/1) where direct publishing of a Revision that has ACF would not actually update the fields. Thanks for the help @thegaffney
 
