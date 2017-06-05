@@ -179,10 +179,22 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     'post_date_gmt' => get_gmt_from_date($post->post_date)
   );
 
+
   if ($to) {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
+    
+    // fixes PR #4
+    if (is_cron()) {
+      kses_remove_filters();
+    }
+
     wp_update_post($data);
+
+    if (is_cron()) {
+      kses_init_filters();
+    }
+    
     clear_post_meta($new_id);  
   } else {
     $new_id = wp_insert_post($data);
@@ -190,7 +202,8 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   copy_post_taxonomies($new_id, $post);
   copy_post_meta_info($new_id, $post);
-  
+
+
   return $new_id;
 }
 
