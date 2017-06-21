@@ -258,7 +258,7 @@ function post_button() {
   if (!$parent): ?>
     <div style="text-align: right; margin-bottom: 10px;">
       <a class="button"
-        href="<?php echo get_create_link($post) ?>"><?php _e('Revisionize', REVISIONIZE_I18N_DOMAIN); ?>
+        href="<?php echo get_create_link($post) ?>"><?php echo apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN)); ?>
       </a>
     </div>
   <?php else: ?>
@@ -271,7 +271,7 @@ function admin_actions($actions, $post) {
   if (is_create_enabled($post)) {
     $actions['create_revision'] = '<a href="'.get_create_link($post).'" title="'
       . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
-      . '">' .  __('Revisionize', REVISIONIZE_I18N_DOMAIN) . '</a>';
+      . '">' .  apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN)) . '</a>';
   }
   return $actions;
 }
