@@ -34,6 +34,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 1.2.2 =
+* New add filter to allow developers to customize button text. Thanks @robbiepaul.
+
 = 1.2.1 = 
 * Fix issue where post titles containing ampersands are escaped when a revision is scheduled with cron. Thanks @piscis.
 
