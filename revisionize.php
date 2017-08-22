@@ -2,7 +2,7 @@
 /*
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
- Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system. 
+ Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
  Version: 1.2.2
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
@@ -44,6 +44,8 @@ function init() {
     add_action('admin_notices', __NAMESPACE__.'\\notice');
 
     add_action('before_delete_post', __NAMESPACE__.'\\on_delete_post');
+
+    add_action( 'wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget' );
   }
 
   // For Cron and users who can publish
@@ -73,7 +75,7 @@ function on_publish_post($new_status, $old_status, $post) {
       if ($original) {
         publish($post, $original);
       }
-      
+
     }
   }
 }
@@ -81,7 +83,7 @@ function on_publish_post($new_status, $old_status, $post) {
 function create() {
   $id = intval($_REQUEST['post']);
 
-  // make sure the clicked link is a valid nonce. Make sure the user can revisionize. 
+  // make sure the clicked link is a valid nonce. Make sure the user can revisionize.
   if (user_can_revisionize() && check_admin_referer('revisionize-create-'.$id)) {
     if ($id) {
       $post = get_post($id);
@@ -95,14 +97,14 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN)); 
+  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
 }
 
 function create_revision($post, $is_original=false) {
   $new_id = copy_post($post, null, $post->ID);
-  update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post. 
+  update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post.
   update_post_meta($new_id, '_post_revision', true);
-  
+
   if ($is_original) {
     update_post_meta($post->ID, '_post_original', true);
     delete_post_meta($new_id, '_post_original');                    // a revision is never an original
@@ -136,7 +138,7 @@ function publish($post, $original) {
   }
 }
 
-// if we delete the original post, make the current parent the new original. 
+// if we delete the original post, make the current parent the new original.
 function on_delete_post($post_id) {
   $post = get_post($post_id);
   $parent_id = get_revision_of($post);
@@ -154,7 +156,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   $post_status = $post->post_status;
 
   if ($to) {
-    $author_id = $to->post_author;  // maintain original author. 
+    $author_id = $to->post_author;  // maintain original author.
   }
   else {
     $author = wp_get_current_user();
@@ -183,7 +185,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   if ($to) {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
-    
+
     // fixes PR #4
     if (is_cron()) {
       kses_remove_filters();
@@ -194,8 +196,8 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     if (is_cron()) {
       kses_init_filters();
     }
-    
-    clear_post_meta($new_id);  
+
+    clear_post_meta($new_id);
   } else {
     $new_id = wp_insert_post($data);
   }
@@ -299,6 +301,49 @@ function notice() {
   </div>
   <?php
   endif;
+}
+
+// Add a dashboard widget showing posts needing review
+function add_dashboard_widget() {
+    if ( ! user_can_publish_revision() ) {
+        return;
+    }
+
+    wp_add_dashboard_widget(
+        'revisionize-posts-needing-review',    // ID of the widget.
+        'Posts needing review',                // Title of the widget.
+        __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
+    );
+}
+
+// Echo the content of the dashboard widget.
+function do_dashboard_widget() {
+    $posts = get_posts( array(
+        'post_type'   => 'any',
+        'post_status' => 'pending',
+        'meta_query'  => array(
+            array(
+                'key'     => '_post_revision',
+                'compare' => 'EXISTS',
+                )
+            )
+        ) );
+
+    if ( empty( $posts ) ) {
+        _e( 'No posts need reviewed at this time!', 'revisionize' );
+    }
+
+    echo '<ul>';
+
+    foreach ( $posts as $post ) {
+        printf( '<li><a href="%s">%s</a> - %s</li>',
+            get_edit_post_link( $post->ID ),
+            get_the_title( $post->ID ),
+            get_the_author_meta( 'nicename', $post->post_author )
+            );
+    }
+
+    echo '</ul>';
 }
 
 // -- Helpers
