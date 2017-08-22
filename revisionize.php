@@ -44,7 +44,10 @@ function init() {
     add_action('admin_notices', __NAMESPACE__.'\\notice');
 
     add_action('before_delete_post', __NAMESPACE__.'\\on_delete_post');
+  }
 
+  // For users who can publish.
+  if ( is_admin() && user_can_publish_revision() ) {
     add_action( 'wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget' );
   }
 
@@ -305,10 +308,6 @@ function notice() {
 
 // Add a dashboard widget showing posts needing review
 function add_dashboard_widget() {
-    if ( ! user_can_publish_revision() ) {
-        return;
-    }
-
     wp_add_dashboard_widget(
         'revisionize-posts-needing-review',    // ID of the widget.
         'Posts needing review',                // Title of the widget.
