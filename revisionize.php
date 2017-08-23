@@ -304,11 +304,11 @@ function notice() {
 // -- Helpers
 
 function user_can_revisionize() {
-  return current_user_can('edit_posts');
+  return apply_filters( 'revisionize_user_can_revisionize', current_user_can('edit_posts') );
 }
 
 function user_can_publish_revision() {
-  return current_user_can('publish_posts') || current_user_can('publish_pages');
+    return apply_filters( 'revisionize_user_can_publish_revision', current_user_can('publish_posts') || current_user_can('publish_pages') );
 }
 
 function is_cron() {
