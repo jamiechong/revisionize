@@ -2,7 +2,7 @@
 /*
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
- Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system. 
+ Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
  Version: 1.2.2
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
@@ -73,7 +73,7 @@ function on_publish_post($new_status, $old_status, $post) {
       if ($original) {
         publish($post, $original);
       }
-      
+
     }
   }
 }
@@ -81,7 +81,7 @@ function on_publish_post($new_status, $old_status, $post) {
 function create() {
   $id = intval($_REQUEST['post']);
 
-  // make sure the clicked link is a valid nonce. Make sure the user can revisionize. 
+  // make sure the clicked link is a valid nonce. Make sure the user can revisionize.
   if (user_can_revisionize() && check_admin_referer('revisionize-create-'.$id)) {
     if ($id) {
       $post = get_post($id);
@@ -95,14 +95,14 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN)); 
+  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
 }
 
 function create_revision($post, $is_original=false) {
   $new_id = copy_post($post, null, $post->ID);
-  update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post. 
+  update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post.
   update_post_meta($new_id, '_post_revision', true);
-  
+
   if ($is_original) {
     update_post_meta($post->ID, '_post_original', true);
     delete_post_meta($new_id, '_post_original');                    // a revision is never an original
@@ -136,7 +136,7 @@ function publish($post, $original) {
   }
 }
 
-// if we delete the original post, make the current parent the new original. 
+// if we delete the original post, make the current parent the new original.
 function on_delete_post($post_id) {
   $post = get_post($post_id);
   $parent_id = get_revision_of($post);
@@ -154,7 +154,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   $post_status = $post->post_status;
 
   if ($to) {
-    $author_id = $to->post_author;  // maintain original author. 
+    $author_id = $to->post_author;  // maintain original author.
   }
   else {
     $author = wp_get_current_user();
@@ -183,7 +183,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   if ($to) {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
-    
+
     // fixes PR #4
     if (is_cron()) {
       kses_remove_filters();
@@ -194,8 +194,8 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     if (is_cron()) {
       kses_init_filters();
     }
-    
-    clear_post_meta($new_id);  
+
+    clear_post_meta($new_id);
   } else {
     $new_id = wp_insert_post($data);
   }
@@ -304,11 +304,11 @@ function notice() {
 // -- Helpers
 
 function user_can_revisionize() {
-  return current_user_can('edit_posts');
+  return apply_filters( 'revisionize_user_can_revisionize', current_user_can('edit_posts') );
 }
 
 function user_can_publish_revision() {
-  return current_user_can('publish_posts') || current_user_can('publish_pages');
+    return apply_filters( 'revisionize_user_can_publish_revision', current_user_can('publish_posts') || current_user_can('publish_pages') );
 }
 
 function is_cron() {
@@ -320,7 +320,8 @@ function is_ajax() {
 }
 
 function is_create_enabled($post) {
-  return !get_revision_of($post) && current_user_can('edit_post', $post->ID);
+  $is_enabled = !get_revision_of($post) && current_user_can('edit_post', $post->ID);
+  return apply_filters( 'revisionize_is_create_enabled', $is_enabled, $post );
 }
 
 function is_original_post($post) {
