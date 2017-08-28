@@ -46,6 +46,11 @@ function init() {
     add_action('before_delete_post', __NAMESPACE__.'\\on_delete_post');
   }
 
+  // For users who can publish.
+  if ( is_admin() && user_can_publish_revision() ) {
+    add_action( 'wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget' );
+  }
+
   // For Cron and users who can publish
   if (is_admin() && user_can_publish_revision() || is_cron()) {
     if (!is_cron() && has_action('acf/save_post')) { // for users with ACF
@@ -299,6 +304,45 @@ function notice() {
   </div>
   <?php
   endif;
+}
+
+// Add a dashboard widget showing posts needing review
+function add_dashboard_widget() {
+  wp_add_dashboard_widget(
+    'revisionize-posts-needing-review',    // ID of the widget.
+    'Posts needing review',                // Title of the widget.
+    __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
+  );
+}
+
+// Echo the content of the dashboard widget.
+function do_dashboard_widget() {
+  $posts = get_posts( array(
+    'post_type'   => 'any',
+    'post_status' => 'pending',
+    'meta_query'  => array(
+      array(
+        'key'     => '_post_revision',
+        'compare' => 'EXISTS',
+        )
+      )
+    ) );
+
+  if ( empty( $posts ) ) {
+    _e( 'No posts need reviewed at this time!', 'revisionize' );
+  }
+
+  echo '<ul>';
+
+  foreach ( $posts as $post ) {
+    printf( '<li><a href="%s">%s</a> - %s</li>',
+      get_edit_post_link( $post->ID ),
+      get_the_title( $post->ID ),
+      get_the_author_meta( 'nicename', $post->post_author )
+      );
+  }
+
+  echo '</ul>';
 }
 
 // -- Helpers
