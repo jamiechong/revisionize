@@ -34,6 +34,10 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 1.3.0 =
+* Add filters to let developers control which users can revisionize or access revisionized posts. [See here](https://github.com/jamiechong/revisionize/pull/6) for more details on how to use. Thanks @ryanshoover.
+* Add a dashboard widget showing pending revisions. [See here](https://github.com/jamiechong/revisionize/pull/7) for more details. Thanks again @ryanshoover.
+
 = 1.2.2 =
 * New add filter to allow developers to customize button text. Thanks @robbiepaul.
 
