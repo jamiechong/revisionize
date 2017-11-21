@@ -2,7 +2,7 @@
 Contributors: jamiechong
 Tags: revision, cms, content, staging, stage, draft, variation, scheduling, schedule, change, clone, preview
 Requires at least: 4.4
-Tested up to: 4.7
+Tested up to: 4.9
 Stable tag: trunk
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -33,6 +33,9 @@ Please post in the support section for help before leaving a negative review!
 5. The original post is kept around as a revision just in case you want to revert back to the way things were. 
 
 == Changelog ==
+
+= 1.3.1 =
+* Fix issue where publishing a revision did not overwrite the original post when ACF 5 was installed but no fields were assigned to the post type.
 
 = 1.3.0 =
 * Add filters to let developers control which users can revisionize or access revisionized posts. [See here](https://github.com/jamiechong/revisionize/pull/6) for more details on how to use. Thanks @ryanshoover.

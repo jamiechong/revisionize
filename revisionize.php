@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.0
+ Version: 1.3.1
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -53,11 +53,11 @@ function init() {
 
   // For Cron and users who can publish
   if (is_admin() && user_can_publish_revision() || is_cron()) {
-    if (!is_cron() && has_action('acf/save_post')) { // for users with ACF
+    if (!is_cron()) {
       add_action('acf/save_post', __NAMESPACE__.'\\acf_on_publish_post', 130, 1);
-    } else { // Cron and everyone else
-      add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
     }
+
+    add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
   }
 
 }
@@ -66,11 +66,18 @@ function init() {
 function acf_on_publish_post($post_id) {
   $post = get_post($post_id);
   $new_status = get_post_status($post_id);
-  on_publish_post($new_status, '', $post);
+  on_publish_post($new_status, '', $post, "ACF");
 }
 
 // Action for transition_post_status. Will publish the revision only if user_can_publish_revision.
-function on_publish_post($new_status, $old_status, $post) {
+function on_publish_post($new_status, $old_status, $post, $from="TPS") {
+
+  // fix issue where revisions were not published when ACF 5 was installed, but this post type didn't have any custom fields.
+  if ($from=="TPS" && !is_cron() && is_acf_post()) {
+    return;
+  }
+
+
   if ($post && $new_status == 'publish') {
     $id = get_revision_of($post);
     if ($id) {
@@ -376,6 +383,9 @@ function is_revision_post($post) {
   return get_post_meta($post->ID, '_post_revision', true);
 }
 
+function is_acf_post() {
+  return has_action('acf/save_post') && (!empty($_POST['acf']) || !empty($_POST['fields']));
+}
 
 function get_revision_of($post) {
   return get_post_meta($post->ID, '_post_revision_of', true);
