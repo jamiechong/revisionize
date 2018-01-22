@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.1
+ Version: 999.9.9
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -111,6 +111,7 @@ function create() {
 }
 
 function create_revision($post, $is_original=false) {
+
   $new_id = copy_post($post, null, $post->ID);
   update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post.
   update_post_meta($new_id, '_post_revision', true);
@@ -122,20 +123,38 @@ function create_revision($post, $is_original=false) {
     delete_post_meta($post->ID, '_post_original');
   }
 
+	delete_post_meta($new_id,'custom_permalink');  // NEW
+
+
+
+  wp_update_post( array(
+          'ID' => $new_id,
+          'post_name' => ''
+      ));
+
+  //    flush_rewrite_rules();
+
   return $new_id;
 }
 
 function publish($post, $original) {
   if (user_can_publish_revision() || is_cron()) {
     $clone_id = create_revision($original);    // keep a backup copy of the live post.
+	wp_trash_post($clone_id); // NEW
+	$permalink = get_post_meta($original->ID,'custom_permalink')[0];
+
+	delete_post_meta($post->ID,'custom_permalink'); // NEW
 
     delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
     copy_post($post, $original, $original->post_parent);                    // copy the variation into the live post
+
+	   update_post_meta($original->ID, 'custom_permalink', $permalink); 				// NEW
 
     delete_post_meta($post->ID, '_post_original');                          // original tag is copied, but remove from source.
 
 
     wp_delete_post($post->ID, true);                                        // delete the variation
+
 
     if (!is_ajax() && !is_cron()) {
       wp_redirect(admin_url('post.php?action=edit&post=' . $original->ID));   // take us back to the live post
