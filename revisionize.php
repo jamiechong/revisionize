@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.1
+ Version: 1.3.2
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -127,7 +127,10 @@ function create_revision($post, $is_original=false) {
 
 function publish($post, $original) {
   if (user_can_publish_revision() || is_cron()) {
-    $clone_id = create_revision($original);    // keep a backup copy of the live post.
+
+    if (keep_original_on_publish()) {
+      create_revision($original);    // keep a backup copy of the live post.
+    }
 
     delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
     copy_post($post, $original, $original->post_parent);                    // copy the variation into the live post
@@ -195,6 +198,10 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   if ($to) {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
+
+    // maintain original date. Fixes scheduled revisions overwriting the date
+    $data['post_date'] = $to->post_date;
+    $data['post_date_gmt'] = get_gmt_from_date($post->post_date);
 
     // fixes PR #4
     if (is_cron()) {
@@ -360,6 +367,10 @@ function user_can_revisionize() {
 
 function user_can_publish_revision() {
     return apply_filters( 'revisionize_user_can_publish_revision', current_user_can('publish_posts') || current_user_can('publish_pages') );
+}
+
+function keep_original_on_publish() {
+  return apply_filters('revisionize_keep_original_on_publish', true);
 }
 
 function is_cron() {
