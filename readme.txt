@@ -37,6 +37,7 @@ Please post in the support section for help before leaving a negative review!
 = 1.3.2 =
 * Maintain original post dates when a revision is published
 * Add filter (revisionize_keep_original_on_publish) to override behaviour of keeping the original as a revision when publishing. 
+* Hide experimental dashboard widget that was added in 1.3.0. [See here](https://github.com/jamiechong/revisionize/pull/7) if you want to show this widget again.
 
 = 1.3.1 =
 * Fix issue where publishing a revision did not overwrite the original post when ACF 5 was installed but no fields were assigned to the post type.

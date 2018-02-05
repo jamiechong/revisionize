@@ -47,8 +47,8 @@ function init() {
   }
 
   // For users who can publish.
-  if ( is_admin() && user_can_publish_revision() ) {
-    add_action( 'wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget' );
+  if (show_dashboard_widget() && is_admin() && user_can_publish_revision()) {
+    add_action('wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget');
   }
 
   // For Cron and users who can publish
@@ -324,14 +324,14 @@ function notice() {
 function add_dashboard_widget() {
   wp_add_dashboard_widget(
     'revisionize-posts-needing-review',    // ID of the widget.
-    'Posts needing review',                // Title of the widget.
+    __('Revisionized Posts Needing Review'),                // Title of the widget.
     __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
   );
 }
 
 // Echo the content of the dashboard widget.
 function do_dashboard_widget() {
-  $posts = get_posts( array(
+  $posts = get_posts(array(
     'post_type'   => 'any',
     'post_status' => 'pending',
     'meta_query'  => array(
@@ -340,20 +340,20 @@ function do_dashboard_widget() {
         'compare' => 'EXISTS',
         )
       )
-    ) );
+    ));
 
-  if ( empty( $posts ) ) {
-    _e( 'No posts need reviewed at this time!', 'revisionize' );
+  if (empty($posts)) {
+    _e('No posts need reviewed at this time!', 'revisionize');
   }
 
   echo '<ul>';
 
-  foreach ( $posts as $post ) {
-    printf( '<li><a href="%s">%s</a> - %s</li>',
-      get_edit_post_link( $post->ID ),
-      get_the_title( $post->ID ),
-      get_the_author_meta( 'nicename', $post->post_author )
-      );
+  foreach ($posts as $post) {
+    printf('<li><a href="%s">%s</a> - %s</li>',
+      get_edit_post_link($post->ID),
+      get_the_title($post->ID),
+      get_the_author_meta('nicename', $post->post_author)
+    );
   }
 
   echo '</ul>';
@@ -362,11 +362,11 @@ function do_dashboard_widget() {
 // -- Helpers
 
 function user_can_revisionize() {
-  return apply_filters( 'revisionize_user_can_revisionize', current_user_can('edit_posts') );
+  return apply_filters('revisionize_user_can_revisionize', current_user_can('edit_posts'));
 }
 
 function user_can_publish_revision() {
-    return apply_filters( 'revisionize_user_can_publish_revision', current_user_can('publish_posts') || current_user_can('publish_pages') );
+  return apply_filters('revisionize_user_can_publish_revision', current_user_can('publish_posts') || current_user_can('publish_pages'));
 }
 
 function keep_original_on_publish() {
@@ -396,6 +396,10 @@ function is_revision_post($post) {
 
 function is_acf_post() {
   return has_action('acf/save_post') && (!empty($_POST['acf']) || !empty($_POST['fields']));
+}
+
+function show_dashboard_widget() {
+  return apply_filters('revisionize_show_dashboard_widget', false);
 }
 
 function get_revision_of($post) {
