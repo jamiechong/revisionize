@@ -34,7 +34,7 @@ add_action('init', __NAMESPACE__.'\\init');
 
 function init() {
   // Only add filters and actions for admin who can actually edit posts
-  if (is_admin() && user_can_revisionize()) {
+  if (is_admin() && user_can_revisionize() && is_post_type_enabled()) {
     add_filter('display_post_states', __NAMESPACE__.'\\post_status_label');
     add_filter('post_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
     add_filter('page_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
@@ -47,7 +47,7 @@ function init() {
   }
 
   // For users who can publish.
-  if (show_dashboard_widget() && is_admin() && user_can_publish_revision()) {
+  if (is_admin() && show_dashboard_widget() && user_can_publish_revision()) {
     add_action('wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget');
   }
 
@@ -240,12 +240,12 @@ function copy_post_taxonomies($new_id, $post) {
 
   if (isset($wpdb->terms)) {
     // Clear default category (added by wp_insert_post)
-    wp_set_object_terms( $new_id, NULL, 'category' );
+    wp_set_object_terms($new_id, NULL, 'category');
 
     $taxonomies = get_object_taxonomies($post->post_type);
 
     foreach ($taxonomies as $taxonomy) {
-      $post_terms = wp_get_object_terms($post->ID, $taxonomy, array( 'orderby' => 'term_order' ));
+      $post_terms = wp_get_object_terms($post->ID, $taxonomy, array('orderby' => 'term_order'));
       $terms = array();
 
       for ($i=0; $i<count($post_terms); $i++) {
@@ -386,12 +386,18 @@ function is_cron() {
 }
 
 function is_ajax() {
-  return defined( 'DOING_AJAX' ) && DOING_AJAX;
+  return defined('DOING_AJAX') && DOING_AJAX;
+}
+
+function is_post_type_enabled() {
+  $type = get_current_post_type();
+  $excluded = apply_filters('revisionize_exclude_post_types', array());
+  return empty($type) || !in_array($type, $excluded);
 }
 
 function is_create_enabled($post) {
   $is_enabled = !get_revision_of($post) && current_user_can('edit_post', $post->ID);
-  return apply_filters( 'revisionize_is_create_enabled', $is_enabled, $post );
+  return apply_filters('revisionize_is_create_enabled', $is_enabled, $post);
 }
 
 function is_original_post($post) {
@@ -429,4 +435,36 @@ function get_parent_permalink($parent) {
 function get_parent_post($post) {
   $id = $post ? get_revision_of($post) : false;
   return $id ? get_post($id) : false;
+}
+
+function get_current_post_type() {
+  global $post, $typenow, $current_screen;
+
+  //we have a post so we can just get the post type from that
+  if ($post && $post->post_type) {
+    return $post->post_type;
+  }
+
+  //check the global $typenow - set in admin.php
+  else if ($typenow) {
+    return $typenow;
+  }
+
+  //check the global $current_screen object - set in sceen.php
+  else if ($current_screen && $current_screen->post_type) {
+    return $current_screen->post_type;
+  }
+
+  //check the post_type querystring
+  else if (isset($_REQUEST['post_type'])) {
+    return sanitize_key($_REQUEST['post_type']);
+  }
+
+  //lastly check if post ID is in query string
+  else if (isset($_REQUEST['post'])) {
+    return get_post_type($_REQUEST['post']);
+  }
+
+  //we do not know the post type!
+  return null;
 }
