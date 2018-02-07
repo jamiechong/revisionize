@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.2
+ Version: 1.3.3
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -391,7 +391,7 @@ function is_ajax() {
 
 function is_post_type_enabled() {
   $type = get_current_post_type();
-  $excluded = apply_filters('revisionize_exclude_post_types', array());
+  $excluded = apply_filters('revisionize_exclude_post_types', array('acf'));
   return empty($type) || !in_array($type, $excluded);
 }
 
@@ -439,32 +439,19 @@ function get_parent_post($post) {
 
 function get_current_post_type() {
   global $post, $typenow, $current_screen;
+  $type = null;
 
-  //we have a post so we can just get the post type from that
   if ($post && $post->post_type) {
-    return $post->post_type;
+    $type = $post->post_type;
+  } else if ($typenow) {
+    $type = $typenow;
+  } else if ($current_screen && $current_screen->post_type) {
+    $type = $current_screen->post_type;
+  } else if (isset($_REQUEST['post_type'])) {
+    $type = sanitize_key($_REQUEST['post_type']);
+  } else if (isset($_REQUEST['post'])) {
+    $type = get_post_type($_REQUEST['post']);
   }
 
-  //check the global $typenow - set in admin.php
-  else if ($typenow) {
-    return $typenow;
-  }
-
-  //check the global $current_screen object - set in sceen.php
-  else if ($current_screen && $current_screen->post_type) {
-    return $current_screen->post_type;
-  }
-
-  //check the post_type querystring
-  else if (isset($_REQUEST['post_type'])) {
-    return sanitize_key($_REQUEST['post_type']);
-  }
-
-  //lastly check if post ID is in query string
-  else if (isset($_REQUEST['post'])) {
-    return get_post_type($_REQUEST['post']);
-  }
-
-  //we do not know the post type!
-  return null;
+  return $type;
 }
