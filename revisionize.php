@@ -140,6 +140,8 @@ function publish($post, $original) {
 
     wp_delete_post($post->ID, true);                                        // delete the variation
 
+    do_action('revision_published', $original->ID);   // after a revision was published
+
     if (!is_ajax() && !is_cron()) {
       wp_redirect(admin_url('post.php?action=edit&post=' . $original->ID));   // take us back to the live post
       exit;
