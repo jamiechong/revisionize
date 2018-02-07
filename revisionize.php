@@ -222,6 +222,14 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   copy_post_taxonomies($new_id, $post);
   copy_post_meta_info($new_id, $post);
 
+  if ($to) {
+    $revisions = wp_get_post_revisions($new_id);
+
+    if (!empty($revisions)) {
+      $revision = current($revisions);
+      copy_post_meta_info($revision->ID, $post);
+    }
+  }
 
   return $new_id;
 }
@@ -263,7 +271,7 @@ function copy_post_meta_info($new_id, $post) {
     $meta_values = get_post_custom_values($meta_key, $post->ID);
     foreach ($meta_values as $meta_value) {
       $meta_value = maybe_unserialize($meta_value);
-      add_post_meta($new_id, $meta_key, $meta_value);
+      add_metadata('post', $new_id, $meta_key, $meta_value);
     }
   }
 }
