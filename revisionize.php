@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.2
+ Version: 1.3.3
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -34,7 +34,7 @@ add_action('init', __NAMESPACE__.'\\init');
 
 function init() {
   // Only add filters and actions for admin who can actually edit posts
-  if (is_admin() && user_can_revisionize()) {
+  if (is_admin() && user_can_revisionize() && is_post_type_enabled()) {
     add_filter('display_post_states', __NAMESPACE__.'\\post_status_label');
     add_filter('post_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
     add_filter('page_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
@@ -47,7 +47,7 @@ function init() {
   }
 
   // For users who can publish.
-  if (show_dashboard_widget() && is_admin() && user_can_publish_revision()) {
+  if (is_admin() && show_dashboard_widget() && user_can_publish_revision()) {
     add_action('wp_dashboard_setup', __NAMESPACE__.'\\add_dashboard_widget');
   }
 
@@ -222,6 +222,14 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   copy_post_taxonomies($new_id, $post);
   copy_post_meta_info($new_id, $post);
 
+  if ($to) {
+    $revisions = wp_get_post_revisions($new_id);
+
+    if (!empty($revisions)) {
+      $revision = current($revisions);
+      copy_post_meta_info($revision->ID, $post);
+    }
+  }
 
   return $new_id;
 }
@@ -232,12 +240,12 @@ function copy_post_taxonomies($new_id, $post) {
 
   if (isset($wpdb->terms)) {
     // Clear default category (added by wp_insert_post)
-    wp_set_object_terms( $new_id, NULL, 'category' );
+    wp_set_object_terms($new_id, NULL, 'category');
 
     $taxonomies = get_object_taxonomies($post->post_type);
 
     foreach ($taxonomies as $taxonomy) {
-      $post_terms = wp_get_object_terms($post->ID, $taxonomy, array( 'orderby' => 'term_order' ));
+      $post_terms = wp_get_object_terms($post->ID, $taxonomy, array('orderby' => 'term_order'));
       $terms = array();
 
       for ($i=0; $i<count($post_terms); $i++) {
@@ -263,7 +271,7 @@ function copy_post_meta_info($new_id, $post) {
     $meta_values = get_post_custom_values($meta_key, $post->ID);
     foreach ($meta_values as $meta_value) {
       $meta_value = maybe_unserialize($meta_value);
-      add_post_meta($new_id, $meta_key, $meta_value);
+      add_metadata('post', $new_id, $meta_key, $meta_value);
     }
   }
 }
@@ -378,12 +386,18 @@ function is_cron() {
 }
 
 function is_ajax() {
-  return defined( 'DOING_AJAX' ) && DOING_AJAX;
+  return defined('DOING_AJAX') && DOING_AJAX;
+}
+
+function is_post_type_enabled() {
+  $type = get_current_post_type();
+  $excluded = apply_filters('revisionize_exclude_post_types', array('acf'));
+  return empty($type) || !in_array($type, $excluded);
 }
 
 function is_create_enabled($post) {
   $is_enabled = !get_revision_of($post) && current_user_can('edit_post', $post->ID);
-  return apply_filters( 'revisionize_is_create_enabled', $is_enabled, $post );
+  return apply_filters('revisionize_is_create_enabled', $is_enabled, $post);
 }
 
 function is_original_post($post) {
@@ -421,4 +435,23 @@ function get_parent_permalink($parent) {
 function get_parent_post($post) {
   $id = $post ? get_revision_of($post) : false;
   return $id ? get_post($id) : false;
+}
+
+function get_current_post_type() {
+  global $post, $typenow, $current_screen;
+  $type = null;
+
+  if ($post && $post->post_type) {
+    $type = $post->post_type;
+  } else if ($typenow) {
+    $type = $typenow;
+  } else if ($current_screen && $current_screen->post_type) {
+    $type = $current_screen->post_type;
+  } else if (isset($_REQUEST['post_type'])) {
+    $type = sanitize_key($_REQUEST['post_type']);
+  } else if (isset($_REQUEST['post'])) {
+    $type = get_post_type($_REQUEST['post']);
+  }
+
+  return $type;
 }
