@@ -34,6 +34,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 1.3.4 =
+* Fix edge case bug where ACF change was not tracked in WP Revision Tracker.
+
 = 1.3.3 =
 * Track ACF changes in the built-in WP Revision Tracker when a Revisionized post is published.
 * Add filter (`revisionize_exclude_post_types`) to exclude Revisionize functionality for specific post types. By default ACF custom field types are disabled.
