@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.4
+ Version: 1.3.5
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -199,9 +199,11 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
 
-    // maintain original date. Fixes scheduled revisions overwriting the date
-    $data['post_date'] = $to->post_date;
-    $data['post_date_gmt'] = get_gmt_from_date($post->post_date);
+    // maintain original date. Fixes scheduled revisions overwriting the date. see issue #9
+    if (is_post_date_preserved($to->ID)) {
+      $data['post_date'] = $to->post_date;
+      $data['post_date_gmt'] = get_gmt_from_date($to->post_date);
+    }
 
     // fixes PR #4
     if (is_cron()) {
@@ -422,6 +424,10 @@ function is_revision_post($post) {
 
 function is_acf_post() {
   return has_action('acf/save_post') && (!empty($_POST['acf']) || !empty($_POST['fields']));
+}
+
+function is_post_date_preserved($id) {
+  return apply_filters('revisionize_preserve_post_date', true, $id) === true;
 }
 
 function show_dashboard_widget() {
