@@ -198,9 +198,9 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   if ($to) {
     $data['ID'] = $to->ID;
     $new_id = $to->ID;
-   
+
+    // maintain original date. Fixes scheduled revisions overwriting the date. see issue #9
     if (apply_filters('revisionize_preserve_post_date', true, $to->ID) === true)) {
-      // maintain original date. Fixes scheduled revisions overwriting the date #9
       $data['post_date'] = $to->post_date;
       $data['post_date_gmt'] = get_gmt_from_date($post->post_date);
     }
