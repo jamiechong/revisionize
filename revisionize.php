@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.3
+ Version: 1.3.5
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -140,8 +140,6 @@ function publish($post, $original) {
 
     wp_delete_post($post->ID, true);                                        // delete the variation
 
-    do_action('revision_published', $original->ID);   // after a revision was published
-
     if (!is_ajax() && !is_cron()) {
       wp_redirect(admin_url('post.php?action=edit&post=' . $original->ID));   // take us back to the live post
       exit;
@@ -202,9 +200,9 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $new_id = $to->ID;
 
     // maintain original date. Fixes scheduled revisions overwriting the date. see issue #9
-    if (apply_filters('revisionize_preserve_post_date', true, $to->ID) === true) {
+    if (is_post_date_preserved($to->ID)) {
       $data['post_date'] = $to->post_date;
-      $data['post_date_gmt'] = get_gmt_from_date($post->post_date);
+      $data['post_date_gmt'] = get_gmt_from_date($to->post_date);
     }
 
     // fixes PR #4
@@ -212,32 +210,34 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
       kses_remove_filters();
     }
 
+    if (is_acf_fields_different($to, $post)) {
+      // this will force WP to create a new revision. 
+      add_filter('wp_save_post_revision_post_has_changed', '__return_true');
+    }
+
+    $revision_before = get_latest_wp_revision($new_id);
+
     wp_update_post($data);
+
+    $revision_after = get_latest_wp_revision($new_id);
+
+    if (is_wp_revision_different($revision_before, $revision_after) && $revision_after) {
+      copy_post_meta_info($revision_after->ID, $post);  
+    }
 
     if (is_cron()) {
       kses_init_filters();
     }
-
-    clear_post_meta($new_id);
   } else {
     $new_id = wp_insert_post($data);
   }
 
   copy_post_taxonomies($new_id, $post);
+  // apply revisionized post_meta to the original post.
   copy_post_meta_info($new_id, $post);
-
-  if ($to) {
-    $revisions = wp_get_post_revisions($new_id);
-
-    if (!empty($revisions)) {
-      $revision = current($revisions);
-      copy_post_meta_info($revision->ID, $post);
-    }
-  }
 
   return $new_id;
 }
-
 
 function copy_post_taxonomies($new_id, $post) {
   global $wpdb;
@@ -263,12 +263,16 @@ function copy_post_taxonomies($new_id, $post) {
 
 function clear_post_meta($id) {
   $meta_keys = get_post_custom_keys($id);
-  foreach ($meta_keys as $meta_key) {
-    delete_post_meta($id, $meta_key);
+  if (!empty($meta_keys)) {
+    foreach ($meta_keys as $meta_key) {
+      delete_metadata('post', $id, $meta_key);
+    }
   }
 }
 
 function copy_post_meta_info($new_id, $post) {
+  clear_post_meta($new_id);
+
   $meta_keys = get_post_custom_keys($post->ID);
 
   foreach ($meta_keys as $meta_key) {
@@ -278,6 +282,12 @@ function copy_post_meta_info($new_id, $post) {
       add_metadata('post', $new_id, $meta_key, $meta_value);
     }
   }
+}
+
+function is_acf_fields_different($a, $b) {
+  $afields = get_field_objects($a->ID, array('format_value' => false));
+  $bfields = get_field_objects($b->ID, array('format_value' => false));
+  return $afields != $bfields;
 }
 
 // -- Admin UI (buttons, links, etc)
@@ -416,6 +426,10 @@ function is_acf_post() {
   return has_action('acf/save_post') && (!empty($_POST['acf']) || !empty($_POST['fields']));
 }
 
+function is_post_date_preserved($id) {
+  return apply_filters('revisionize_preserve_post_date', true, $id) === true;
+}
+
 function show_dashboard_widget() {
   return apply_filters('revisionize_show_dashboard_widget', false);
 }
@@ -458,4 +472,13 @@ function get_current_post_type() {
   }
 
   return $type;
+}
+
+function get_latest_wp_revision($id) {
+  $revisions = wp_get_post_revisions($id);
+  return !empty($revisions) ? current($revisions) : null;
+}
+
+function is_wp_revision_different($a, $b) {
+  return $a && !$b || !$a && $b || $a->ID != $b->ID;
 }
