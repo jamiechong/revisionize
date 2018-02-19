@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://github.com/jamiechong/revisionize
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.5
+ Version: 1.3.6
  Author: Jamie Chong
  Author URI: http://jamiechong.ca
  Text Domain: revisionize
@@ -212,7 +212,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
       kses_remove_filters();
     }
 
-    if (is_acf_fields_different($to, $post)) {
+    if (is_acf_post() && is_acf_fields_different($to, $post)) {
       // this will force WP to create a new revision. 
       add_filter('wp_save_post_revision_post_has_changed', '__return_true');
     }

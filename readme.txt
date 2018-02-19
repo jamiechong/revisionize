@@ -34,6 +34,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 1.3.6 =
+* Fix critical bug for non ACF users. 
+
 = 1.3.5 =
 * Add filter to give developers control over updating post dates. [See here](https://github.com/jamiechong/revisionize/issues/13). Thanks @piscis
 * Fix bug with gmt date.
@@ -71,6 +74,9 @@ Please post in the support section for help before leaving a negative review!
 * The author of the original post is maintained when a Revision is published - it doesn't get set to the author of the user who created the Revision. 
 
 == Upgrade Notice ==
+
+= 1.3.6 =
+Fixed a critical bug for non ACF users. Sorry!
 
 = 1.1.0 = 
 Fixed a permission issue where users could Revisionize and overwrite a post they don't have write access to.
