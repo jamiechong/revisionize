@@ -137,11 +137,9 @@ function setup_settings() {
 function setup_basic_settings() {
   add_settings_section('revisionize_section_basic', '', '__return_null', 'revisionize');  
 
-  checkbox_setting('Keep Backup', 'keep_backup', "After publishing the revision, the previously live post will be kept around and marked as a backup revision of the new version.", true, 'revisionize_section_basic', 'revisionize_keep_original_on_publish', __NAMESPACE__.'\\filter_keep_backup');
+  input_setting('checkbox', 'Keep Backup', 'keep_backup', "After publishing the revision, the previously live post will be kept around and marked as a backup revision of the new version.", true, 'revisionize_section_basic', 'revisionize_keep_original_on_publish', __NAMESPACE__.'\\filter_keep_backup');
 
-
-  checkbox_setting('Preserve Date', 'preserve_date', "The date of the original post will be maintained even if the revisionized post date changes. In particular, a scheduled revision won't modify the post date once it's published.", true, 'revisionize_section_basic', 'revisionize_preserve_post_date', __NAMESPACE__.'\\filter_preserve_date');
-
+  input_setting('checkbox', 'Preserve Date', 'preserve_date', "The date of the original post will be maintained even if the revisionized post date changes. In particular, a scheduled revision won't modify the post date once it's published.", true, 'revisionize_section_basic', 'revisionize_preserve_post_date', __NAMESPACE__.'\\filter_preserve_date');
 }
 
 function setup_addon_settings() {
@@ -221,28 +219,18 @@ function get_installed_addons() {
   return apply_filters('revisionize_installed_addons', array());
 }
 
-function settings_get_available_addons() {
-  $addons = array(
-    array(
-      "id" => "enhanced_settings",
-      "name" => "Enhanced Settings",
-      "description" => "Enhance the settings panel with features that help keep your revisions more organized. Includes settings for:<ul><li>Trashing old revisions</li><li>Displaying a revision ID</li><li>Excluding post types</li></ul>",
-      "url" => "https://revisionize.pro/",
-      "price" => "10"
-    ), array(
-      "id" => "contributors_can",
-      "name" => "Contributors Can",
-      "description" => "Users who can create posts, such as those with the built-in Contributor role, can also revisionize existing posts. They still cannot publish the revision - only someone with publish capabilities, like an Editor or Administrator can.",
-      "url" => "https://revisionize.pro/",
-      "price" => "10"
-    )
-  ); 
+function fetch_addons() {
+  $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "http://revisionize.pro/addons.php";
+  $json = file_get_contents($url);
+  return json_decode($json, true);
+}
 
+function settings_get_available_addons() {
+  $addons = fetch_addons();
   $installed = get_installed_addons();
   foreach ($addons as &$addon) {
     $addon["installed"] = array_key_exists($addon["id"], $installed) ? $installed[$addon["id"]] : false;
   } 
-
   return $addons;
 }
 
@@ -267,8 +255,11 @@ function filter_preserve_date($b) {
   return is_checkbox_checked('preserve_date', $b);
 }
 
-function checkbox_setting($name, $key, $description, $default, $section, $filter=null, $handler=null) {
-  add_settings_field('revisionize_setting_'.$key, $name, __NAMESPACE__.'\\field_checkbox', 'revisionize', $section, array(
+// basic inputs for now
+// $type: text|email|number|checkbox
+function input_setting($type, $name, $key, $description, $default, $section, $filter=null, $handler=null) {
+  add_settings_field('revisionize_setting_'.$key, $name, __NAMESPACE__.'\\field_input', 'revisionize', $section, array(
+    'type' => $type,
     'label_for' => 'revisionize_setting_'.$key,
     'key' => $key,
     'description' => $description,
@@ -280,15 +271,26 @@ function checkbox_setting($name, $key, $description, $default, $section, $filter
   }
 }
 
-function field_checkbox($args) {
+function field_input($args) {
+  $type = $args['type'];
   $id = esc_attr($args['label_for']);
   $key = esc_attr($args['key']);
-  $checked = is_checkbox_checked($key, $args['default']);
+  $value = '';
+
+  if ($type == 'checkbox') {
+    if (is_checkbox_checked($key, $args['default'])) {
+      $value = 'checked';
+    }
+  } else {
+    $value = 'value="'.get_setting($key, $args['default']).'"';
+  }
   ?>
   <div>
+    <?php if ($type=="checkbox"): ?>
     <input type="hidden" name="revisionize_settings[_<?php echo $key?>_set]" value="1"/>
+    <?php endif; ?>
     <label>
-      <input id="<?php echo $id?>" type="checkbox" name="revisionize_settings[<?php echo $key?>]" <?php if ($checked) echo "checked"?>/> 
+      <input id="<?php echo $id?>" type="<?php echo $type?>" name="revisionize_settings[<?php echo $key?>]" <?php echo $value?>/> 
       <?php echo $args['description']?>
     </label>
   </div>  
@@ -306,20 +308,3 @@ function is_checkbox_on($key) {
 function is_checkbox_set($key) {
   return get_setting('_'.$key.'_set') == "1";    
 }
-
-
-
-// function pro_api_status_checked_notice() {
-//   $notice = 'fetch_api_key_status called';
-//   echo '<div class="notice notice-warning is-dismissible"><p>'.$notice.'</p></div>';    
-// }
-
-// function pro_update_available_notice() {
-//   $notice = __('A new version of Revisionize PRO is available. Go to <a href="'.admin_url('options-general.php?page=revisionize').'">settings</a> to update.', REVISIONIZE_I18N_DOMAIN);
-//   echo '<div class="notice notice-warning is-dismissible"><p>'.$notice.'</p></div>';  
-// }
-// function pro_do_update_notice() {
-//   $notice = __('A new version of Revisionize PRO is available. <a href="'.admin_url('options-general.php?page=revisionize&pro_do_update=1').'">Update Now</a>.', REVISIONIZE_I18N_DOMAIN);
-//   echo '<div class="notice notice-warning is-dismissible"><p>'.$notice.'</p></div>';  
-// }
-
