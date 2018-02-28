@@ -34,6 +34,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.0.0 =
+* Settings panel and the ability to install addons
+
 = 1.3.6 =
 * Fix critical bug for non ACF users. 
 
