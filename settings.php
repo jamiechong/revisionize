@@ -47,6 +47,11 @@ function settings_page() {
   ?>
   <div class="wrap">
     <style type="text/css">
+    .rvz-cf:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
     .rvz-settings-form {
       margin-top: 15px;
     }
@@ -60,40 +65,62 @@ function settings_page() {
     .rvz-settings-form .form-table p {
       margin-top: 0;
     }
-    .rvz-addons {  }
+    .rvz-addons { margin-top: 30px; }
     .rvz-addons * { box-sizing: border-box; }
-    .rvz-addon {
+    .rvz-addon-col {
       float: left;
-      width: 25%;
-      height: 300px;
-      padding: 15px 40px 15px 0;
+      width: 100%;
+      padding: 0;
+    }
+    @media (min-width: 783px) {
+      .rvz-addon-col {
+        padding-right: 25px;
+        width: 50%;
+      }
+    }
+    @media (min-width: 1366px) {
+      .rvz-addon-col {
+        width: 33.3333%;
+      }
+    }
+    @media (min-width: 1600px) {
+      .rvz-addon-col {
+        width: 25%;
+      }
+    }
+    .rvz-addon {
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      padding: 15px 15px 55px;
+      min-height: 300px;
+      position: relative;
+      margin-bottom: 30px;
     }
     .rvz-addon h3 {
-      background-color: orange;
-      border-radius: 3px;
-      color: white;
-      padding: 0 10px;
+      margin-top: 0;
       line-height: 30px;
       text-transform: uppercase;
       width: 100%;
-    }
-    .rvz-addon p, .rvz-addon ul {
-      padding: 0 10px;
     }
     .rvz-addon ul {
       list-style: disc;
       padding-left: 25px;
     }
-    .rvz-addon .rvz-button {
-      display: block;
-      width: 200px;
-      margin: 0 auto;
-      background-color: blue;
-      color: white;
-      text-align: center;
-      line-height: 30px;
-      text-decoration: none;
-      border-radius: 3px;
+    .rvz-addon .rvz-meta {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      padding: 15px;
+      width: 100%;
+      text-align: right;
+    }
+    .rvz-addon .rvz-meta label {
+      line-height: 22px;
+      margin-left: 15px;
+    }
+    .rvz-addon .rvz-meta label:first-child {
+      margin-left: 0;
+      float: left;
     }
     </style>
     <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -110,10 +137,11 @@ function settings_page() {
 
       submit_button('Save Settings');
 
+      addons_html();
+
+      submit_button('Save Settings');
     ?>
     </form>
-
-    <?php addons_html(); ?>
   </div>
   <?php 
 }
@@ -162,25 +190,39 @@ function settings_addon_file_html($args) {
 function addons_html() {
   ?>
   <h1>Revisionize Addons</h1>
-  <p>Improve the free Revisionize plugin with these official addons.</p>
-  <div class="rvz-addons">
+  <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="http://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
+  <div class="rvz-addons rvz-cf">
     <?php foreach (settings_get_available_addons() as $addon) addon_html($addon); ?>
   </div>
   <?php
 }
 
 function addon_html($addon) {
+  $id = $addon['id'];
+  $active = "addon_${id}_active";
+  $remove = "addon_${id}_delete";
+  $active_checked = is_addon_active($id) ? 'checked' : '';
   ?>
-  <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
-    <h3><?php echo $addon['name'];?></h3>
-    <p><?php echo nl2br($addon['description']); ?></p>
-    <p>
-      <?php if ($addon['installed']): ?>
-      Installed: <?php echo $addon['installed']?>
-      <?php else: ?>
-      <a class="rvz-button" href="<?php echo $addon['url']?>" target="_blank">$<?php echo $addon['price']?> - Add to Cart</a>
-      <?php endif; ?>
-    </p>
+  <div class="rvz-addon-col">
+    <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
+      <h3><?php echo $addon['name'];?></h3>
+      <p><?php echo nl2br($addon['description']); ?></p>
+      <div class="rvz-meta rvz-cf">
+        <?php if ($addon['installed']): ?>
+        <label>Installed: <?php echo $addon['installed']?></label>
+        <label>
+          <input type="hidden" name="revisionize_settings[_<?php echo $active?>_set]" value="1"/>
+          <input type="checkbox" name="revisionize_settings[<?php echo $active?>]" <?php echo $active_checked?> /> Active
+        </label>
+        <label>
+          <input type="hidden" name="revisionize_settings[_<?php echo $remove?>_set]" value="1"/>
+          <input type="checkbox" name="revisionize_settings[<?php echo $remove?>]" /> Delete
+        </label>
+        <?php else: ?>
+        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank">$<?php echo $addon['price']?> - Add to Cart</a>
+        <?php endif; ?>
+      </div>
+    </div>
   </div>
   <?php
 }
@@ -189,6 +231,17 @@ function addon_html($addon) {
 function get_setting($key, $default='') {
   $settings = get_option('revisionize_settings');  
   return !empty($settings[$key]) ? $settings[$key] : $default;
+}
+
+function remove_setting($keys) {
+  $settings = get_option('revisionize_settings');    
+  if (!is_array($keys)) {
+    $keys = array($keys);
+  }
+  foreach ($keys as $key) {
+    unset($settings[$key]);
+  }
+  update_option('revisionize_settings', $settings);
 }
 
 function is_on_settings_page() {
@@ -215,6 +268,16 @@ function install_addon($filename) {
   file_put_contents($target_path.'/'.$data['name'].'.php', base64_decode($data['code']));
 }
 
+function uninstall_addon($id, $file) {
+  remove_setting(array(
+    "addon_${id}_active",
+    "addon_${id}_delete",
+    "_addon_${id}_active_set",
+    "_addon_${id}_delete_set",
+  ));
+  unlink($file);
+}
+
 function get_installed_addons() {
   return apply_filters('revisionize_installed_addons', array());
 }
@@ -237,14 +300,27 @@ function settings_get_available_addons() {
 function load_addons() {
   $addons = settings_get_available_addons();
   foreach ($addons as $addon) {
-    $file = REVISIONIZE_ROOT.'/addons/'.$addon['id'].'.php';
+    $id = $addon['id'];
+    $file = REVISIONIZE_ROOT.'/addons/'.$id.'.php';
     if (file_exists($file)) {
-      require_once $file;
-      \RevisionizeAddon::create($addon['id']);
+      if (is_addon_pending_delete($id)) {
+        uninstall_addon($id, $file);
+      } else {
+        require_once $file;
+        \RevisionizeAddon::create($id);        
+      }
     }
   }
 
   do_action('revisionize_addons_loaded');
+}
+
+function is_addon_active($id) {
+  return is_checkbox_checked('addon_'.$id.'_active', true);
+}
+
+function is_addon_pending_delete($id) {
+  return is_checkbox_checked('addon_'.$id.'_delete', false);  
 }
 
 function filter_keep_backup($b) {
