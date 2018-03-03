@@ -190,9 +190,9 @@ function settings_addon_file_html($args) {
 function addons_html() {
   ?>
   <h1>Revisionize Addons</h1>
-  <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="http://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
+  <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="https://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
   <div class="rvz-addons rvz-cf">
-    <?php foreach (settings_get_available_addons() as $addon) addon_html($addon); ?>
+    <?php foreach (get_available_addons() as $addon) addon_html($addon); ?>
   </div>
   <?php
 }
@@ -205,7 +205,7 @@ function addon_html($addon) {
   ?>
   <div class="rvz-addon-col">
     <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
-      <h3><?php echo $addon['name'];?></h3>
+      <h3><a href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['name'];?></a></h3>
       <p><?php echo nl2br($addon['description']); ?></p>
       <div class="rvz-meta rvz-cf">
         <?php if ($addon['installed']): ?>
@@ -219,7 +219,7 @@ function addon_html($addon) {
           <input type="checkbox" name="revisionize_settings[<?php echo $remove?>]" /> Delete
         </label>
         <?php else: ?>
-        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank">$<?php echo $addon['price']?> - Add to Cart</a>
+        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank">$<?php echo $addon['price']?> - <?php echo $addon['button']?></a>
         <?php endif; ?>
       </div>
     </div>
@@ -231,6 +231,12 @@ function addon_html($addon) {
 function get_setting($key, $default='') {
   $settings = get_option('revisionize_settings');  
   return !empty($settings[$key]) ? $settings[$key] : $default;
+}
+
+function set_setting($key, $value) {
+  $settings = get_option('revisionize_settings');  
+  $settings[$key] = $value;
+  update_option('revisionize_settings', $settings);  
 }
 
 function remove_setting($keys) {
@@ -266,6 +272,10 @@ function install_addon($filename) {
 
   // TODO: check to see if addon already installed and if this version is newer. Maybe send warning if not (downgrading)
   file_put_contents($target_path.'/'.$data['name'].'.php', base64_decode($data['code']));
+
+  $installed = get_installed_addons();
+  $installed[] = $data['name'];
+  update_option('revisionize_installed_addons', array_unique($installed));
 }
 
 function uninstall_addon($id, $file) {
@@ -276,31 +286,40 @@ function uninstall_addon($id, $file) {
     "_addon_${id}_delete_set",
   ));
   unlink($file);
+
+  $installed = get_installed_addons();
+  if (($key = array_search($id, $installed)) !== false) {
+    array_splice($installed, $key, 1);
+  }
+  update_option('revisionize_installed_addons', array_unique($installed));
 }
 
-function get_installed_addons() {
-  return apply_filters('revisionize_installed_addons', array());
+function get_registered_addons() {
+  return apply_filters('revisionize_registered_addons', array());
 }
 
 function fetch_addons() {
-  $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "http://revisionize.pro/addons.php";
+  $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "https://revisionize.pro/addons.php";
   $json = file_get_contents($url);
   return json_decode($json, true);
 }
 
-function settings_get_available_addons() {
+function get_available_addons() {
   $addons = fetch_addons();
-  $installed = get_installed_addons();
+  $registered = get_registered_addons();
   foreach ($addons as &$addon) {
-    $addon["installed"] = array_key_exists($addon["id"], $installed) ? $installed[$addon["id"]] : false;
+    $addon["installed"] = array_key_exists($addon["id"], $registered) ? $registered[$addon["id"]] : false;
   } 
   return $addons;
 }
 
+function get_installed_addons() {
+  return get_option('revisionize_installed_addons', array());
+}
+
 function load_addons() {
-  $addons = settings_get_available_addons();
-  foreach ($addons as $addon) {
-    $id = $addon['id'];
+  $addons = get_installed_addons();
+  foreach ($addons as $id) {
     $file = REVISIONIZE_ROOT.'/addons/'.$id.'.php';
     if (file_exists($file)) {
       if (is_addon_pending_delete($id)) {

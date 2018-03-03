@@ -8,7 +8,7 @@ abstract class RevisionizeAddon {
   private static $loaded = array();
 
   function __construct() {
-    add_filter('revisionize_installed_addons', array($this, 'register'));
+    add_filter('revisionize_registered_addons', array($this, 'register'));
 
     if ($this->is_active()) {
       $this->init();
