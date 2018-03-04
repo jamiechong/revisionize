@@ -26,6 +26,12 @@ add_action('admin_menu', __NAMESPACE__.'\\settings_menu');
 
 function settings_admin_init() {
   setup_settings();
+
+  if (is_on_settings_page()) {
+    set_setting('has_seen_settings', true);
+  } else if (get_setting('has_seen_settings', false) === false) {
+    add_action('admin_notices', __NAMESPACE__.'\\notify_new_settings');
+  }
 }
 
 function settings_menu() {
@@ -400,4 +406,9 @@ function is_checkbox_on($key) {
 
 function is_checkbox_set($key) {
   return get_setting('_'.$key.'_set') == "1";    
+}
+
+function notify_new_settings() {
+  $notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.admin_url('options-general.php?page=revisionize').'">Check it out!</a></strong>';
+  echo '<div class="notice notice-info is-dismissible"><p>'.$notice.'</p></div>';  
 }
