@@ -1,7 +1,7 @@
 <?php
 /*
  Plugin Name: Revisionize
- Plugin URI: https://github.com/jamiechong/revisionize
+ Plugin URI: https://revisionize.pro
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
  Version: 2.0.0
  Author: Jamie Chong

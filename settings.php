@@ -206,7 +206,7 @@ function addon_html($addon) {
   <div class="rvz-addon-col">
     <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
       <h3><a href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['name'];?></a></h3>
-      <p><?php echo nl2br($addon['description']); ?></p>
+      <?php echo $addon['description']; ?>
       <div class="rvz-meta rvz-cf">
         <?php if ($addon['installed']): ?>
         <label>Installed: <?php echo $addon['installed']?></label>
@@ -219,7 +219,7 @@ function addon_html($addon) {
           <input type="checkbox" name="revisionize_settings[<?php echo $remove?>]" /> Delete
         </label>
         <?php else: ?>
-        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank">$<?php echo $addon['price']?> - <?php echo $addon['button']?></a>
+        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['price']?> - <?php echo $addon['button']?></a>
         <?php endif; ?>
       </div>
     </div>
@@ -299,9 +299,7 @@ function get_available_addons() {
   $addons = get_transient('revisionize_available_addons');
 
   if ($addons === false) {
-    $query = http_build_query(array("installed" => $registered, "site" => get_site_url(), "version" => REVISIONIZE_VERSION));
-    $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "https://revisionize.pro/addons.php?".$query;
-    $payload = json_decode(file_get_contents($url), true);
+    $payload = json_decode(file_get_contents("https://revisionize.pro/rvz-addons/"), true);
     $addons = $payload['addons'];
     set_transient('revisionize_available_addons', $addons, 4 * 60 * 60); // cache for 4 hours
   }
