@@ -299,9 +299,14 @@ function get_registered_addons() {
 }
 
 function fetch_addons() {
-  $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "https://revisionize.pro/addons.php";
-  $json = file_get_contents($url);
-  return json_decode($json, true);
+  $addons = get_transient('revisionize_available_addons');
+  if ($addons === false) {
+    $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "https://revisionize.pro/addons.php";
+    $json = file_get_contents($url);
+    $addons = json_decode($json, true);
+    set_transient('revisionize_available_addons', $addons, 4 * 60 * 60); // cache for 4 hours
+  }
+  return $addons;
 }
 
 function get_available_addons() {

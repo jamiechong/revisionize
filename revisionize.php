@@ -5,7 +5,7 @@
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
  Version: 2.0.0
  Author: Jamie Chong
- Author URI: http://jamiechong.ca
+ Author URI: https://revisionize.pro
  Text Domain: revisionize
  */
 
