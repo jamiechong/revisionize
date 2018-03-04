@@ -294,27 +294,22 @@ function uninstall_addon($id, $file) {
   update_option('revisionize_installed_addons', array_unique($installed));
 }
 
-function get_registered_addons() {
-  return apply_filters('revisionize_registered_addons', array());
-}
-
-function fetch_addons() {
+function get_available_addons() {
+  $registered = apply_filters('revisionize_registered_addons', array());
   $addons = get_transient('revisionize_available_addons');
+
   if ($addons === false) {
-    $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "https://revisionize.pro/addons.php";
-    $json = file_get_contents($url);
-    $addons = json_decode($json, true);
+    $query = http_build_query(array("installed" => $registered, "site" => get_site_url(), "version" => REVISIONIZE_VERSION));
+    $url = defined('REVISIONIZE_DEV_API_URL') ? REVISIONIZE_DEV_API_URL : "https://revisionize.pro/addons.php?".$query;
+    $payload = json_decode(file_get_contents($url), true);
+    $addons = $payload['addons'];
     set_transient('revisionize_available_addons', $addons, 4 * 60 * 60); // cache for 4 hours
   }
-  return $addons;
-}
 
-function get_available_addons() {
-  $addons = fetch_addons();
-  $registered = get_registered_addons();
   foreach ($addons as &$addon) {
     $addon["installed"] = array_key_exists($addon["id"], $registered) ? $registered[$addon["id"]] : false;
   } 
+
   return $addons;
 }
 
