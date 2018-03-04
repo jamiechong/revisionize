@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.0.1 =
+* Fix Fatal error on 2.0.0 - had forgot to commit settings.php and addon.php. Please update and activate again.
+
 = 2.0.0 =
 * Add a basic settings panel.
 * Add ability to install addons
@@ -81,6 +84,9 @@ Please post in the support section for help before leaving a negative review!
 * The author of the original post is maintained when a Revision is published - it doesn't get set to the author of the user who created the Revision. 
 
 == Upgrade Notice ==
+
+= 2.0.1 =
+* Fixed fatal error on 2.0.0. If this affected you, please update and activate again.
 
 = 1.3.6 =
 Fixed a critical bug for non ACF users. Sorry!
