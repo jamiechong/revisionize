@@ -1,16 +1,15 @@
 <?php
 /*
  Plugin Name: Revisionize
- Plugin URI: https://github.com/jamiechong/revisionize
+ Plugin URI: https://revisionize.pro
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 1.3.6
+ Version: 2.0.0
  Author: Jamie Chong
- Author URI: http://jamiechong.ca
+ Author URI: https://revisionize.pro
  Text Domain: revisionize
  */
 
-/*  Copyright 2016 Jamie Chong
-
+/*  
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -29,6 +28,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 namespace Revisionize;
 
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
+define('REVISIONIZE_ROOT', dirname(__FILE__));
+define('REVISIONIZE_VERSION', '2.0.0');
+
+require_once REVISIONIZE_ROOT.'/settings.php';
 
 add_action('init', __NAMESPACE__.'\\init');
 
@@ -99,7 +102,7 @@ function create() {
       $post = get_post($id);
 
       if ($post && is_create_enabled($post)) {
-        $new_id = create_revision($post, !is_revision_post($post) || is_original_post($post));
+        $new_id = create_revision($post, !get_revision_of($post) || is_original_post($post));
         wp_redirect(admin_url('post.php?action=edit&post=' . $new_id));
         exit;
       }
@@ -113,14 +116,18 @@ function create() {
 function create_revision($post, $is_original=false) {
   $new_id = copy_post($post, null, $post->ID);
   update_post_meta($new_id, '_post_revision_of', $post->ID);      // mark the new post as a variation of the old post.
-  update_post_meta($new_id, '_post_revision', true);
 
   if ($is_original) {
     update_post_meta($post->ID, '_post_original', true);
     delete_post_meta($new_id, '_post_original');                    // a revision is never an original
+
+    // only call action if new revision created (not a backup)
+    do_action('revisionize_after_create_revision', $post->ID, $new_id);
+
   } else {
     delete_post_meta($post->ID, '_post_original');
   }
+
 
   return $new_id;
 }
@@ -132,13 +139,16 @@ function publish($post, $original) {
       create_revision($original);    // keep a backup copy of the live post.
     }
 
+    do_action('revisionize_before_publish', $original->ID, $post->ID);
+
     delete_post_meta($post->ID, '_post_revision_of');                       // remove the variation tag so the meta isn't copied
     copy_post($post, $original, $original->post_parent);                    // copy the variation into the live post
 
     delete_post_meta($post->ID, '_post_original');                          // original tag is copied, but remove from source.
 
-
     wp_delete_post($post->ID, true);                                        // delete the variation
+
+    do_action('revisionize_after_publish', $original->ID);
 
     if (!is_ajax() && !is_cron()) {
       wp_redirect(admin_url('post.php?action=edit&post=' . $original->ID));   // take us back to the live post
@@ -299,7 +309,7 @@ function post_button() {
   if (!$parent): ?>
     <div style="text-align: right; margin-bottom: 10px;">
       <a class="button"
-        href="<?php echo get_create_link($post) ?>"><?php echo apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN)); ?>
+        href="<?php echo get_create_link($post) ?>"><?php echo get_create_button_text(); ?>
       </a>
     </div>
   <?php else: ?>
@@ -312,7 +322,7 @@ function admin_actions($actions, $post) {
   if (is_create_enabled($post)) {
     $actions['create_revision'] = '<a href="'.get_create_link($post).'" title="'
       . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
-      . '">' .  apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN)) . '</a>';
+      . '">' . get_create_button_text() . '</a>';
   }
   return $actions;
 }
@@ -321,10 +331,9 @@ function admin_actions($actions, $post) {
 function post_status_label($states) {
   global $post;
   if (get_revision_of($post)) {
-    array_unshift($states, 'Revision');
-  }
-  if (is_original_post($post) && get_revision_of($post)) {
-    array_unshift($states, 'Original');
+    $label = is_original_post($post) ? __('Backup Revision', REVISIONIZE_I18N_DOMAIN) : __('Revision', REVISIONIZE_I18N_DOMAIN);
+    $label = apply_filters('revisionize_post_status_label', $label);
+    array_unshift($states, $label);
   }
   return $states;
 }
@@ -358,7 +367,7 @@ function do_dashboard_widget() {
     'post_status' => 'pending',
     'meta_query'  => array(
       array(
-        'key'     => '_post_revision',
+        'key'     => '_post_revision_of',
         'compare' => 'EXISTS',
         )
       )
@@ -405,7 +414,7 @@ function is_ajax() {
 
 function is_post_type_enabled() {
   $type = get_current_post_type();
-  $excluded = apply_filters('revisionize_exclude_post_types', array('acf'));
+  $excluded = apply_filters('revisionize_exclude_post_types', array('acf', 'attachment'));
   return empty($type) || !in_array($type, $excluded);
 }
 
@@ -416,10 +425,6 @@ function is_create_enabled($post) {
 
 function is_original_post($post) {
   return get_post_meta($post->ID, '_post_original', true);
-}
-
-function is_revision_post($post) {
-  return get_post_meta($post->ID, '_post_revision', true);
 }
 
 function is_acf_post() {
@@ -442,6 +447,10 @@ function get_create_link($post) {
   return wp_nonce_url(admin_url("admin.php?action=revisionize_create&post=".$post->ID), 'revisionize-create-'.$post->ID);
 }
 
+function get_create_button_text() {
+  return apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN));
+}
+
 function get_parent_editlink($parent, $s=null) {
   return sprintf('<a href="%s">%s</a>', get_edit_post_link($parent->ID), $s ? $s : $parent->post_title);
 }
@@ -456,7 +465,7 @@ function get_parent_post($post) {
 }
 
 function get_current_post_type() {
-  global $post, $typenow, $current_screen;
+  global $post, $typenow, $current_screen, $pagenow;
   $type = null;
 
   if ($post && $post->post_type) {
@@ -469,6 +478,8 @@ function get_current_post_type() {
     $type = sanitize_key($_REQUEST['post_type']);
   } else if (isset($_REQUEST['post'])) {
     $type = get_post_type($_REQUEST['post']);
+  } else if ($pagenow == 'edit.php') {
+    $type = 'post';
   }
 
   return $type;

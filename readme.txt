@@ -14,12 +14,15 @@ Draft up revisions or variations of live, published content. Publish the drafted
 
 On a busy site you can't afford to make changes to *live*, *published* posts without reviewing and approving them first. **Revisionize** clones your post, page or CPT to a draft that gives you the freedom to tweak, edit and experiment with the content. Preview your drafted changes and/or [share the preview](https://wordpress.org/plugins/public-post-preview/) with a 3rd party to approve the changes. When you're happy, publish the revision, which will copy your content changes to the original post. Alternatively, schedule the revision to publish your content at a specific time. 
 
+= Official Addons =
+
+Visit [revisionize.pro](https://revisionize.pro) to add functionality that makes Revisionize even more powerful. 
+
 = Compatible with =
 
-* Plugin: [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/)
-* Plugin: [Public Post Preview](https://wordpress.org/plugins/public-post-preview/)
-* Theme: [Divi](https://www.elegantthemes.com/gallery/divi/)
-* *Let us know other themes/plugins that you have successfully used Revisionize with*
+* [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/)
+* [Public Post Preview](https://wordpress.org/plugins/public-post-preview/)
+* *Let us know other plugins that you have successfully used Revisionize with*
 
 Please post in the support section for help before leaving a negative review!
 
@@ -33,6 +36,10 @@ Please post in the support section for help before leaving a negative review!
 5. The original post is kept around as a revision just in case you want to revert back to the way things were. 
 
 == Changelog ==
+
+= 2.0.0 =
+* Add a basic settings panel.
+* Add ability to install addons
 
 = 1.3.6 =
 * Fix critical bug for non ACF users. 
