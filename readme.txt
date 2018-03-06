@@ -93,6 +93,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Upgrade Notice ==
 
+= 2.1.0 =
+* Improve compatibility with Multisite/Network installations.
+
 = 2.0.1 =
 * Fixed fatal error on 2.0.0. If this affected you, please update and activate again.
 
