@@ -29,7 +29,7 @@ namespace Revisionize;
 
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
 define('REVISIONIZE_ROOT', dirname(__FILE__));
-define('REVISIONIZE_VERSION', '2.1.0');
+// define('REVISIONIZE_VERSION', '2.1.0'); // not used right now
 
 require_once REVISIONIZE_ROOT.'/settings.php';
 

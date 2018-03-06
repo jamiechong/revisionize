@@ -269,7 +269,7 @@ function on_settings_saved($settings=null) {
 
 function install_addon($filename) {
   // make sure the directory exists
-  $target_path = REVISIONIZE_ROOT.'/addons';
+  $target_path = get_addons_root();
   wp_mkdir_p($target_path);
 
   $data = file_get_contents($filename);
@@ -321,6 +321,10 @@ function get_installed_addons() {
   return $addons ? $addons : array();
 }
 
+function get_addons_root() {
+  return apply_filters('revisionize_addons_root', REVISIONIZE_ROOT.'/addons');
+}
+
 function set_installed_addons($installed) {
   if (is_multisite()) {
     update_site_option('revisionize_installed_addons', array_unique($installed));  
@@ -332,7 +336,7 @@ function set_installed_addons($installed) {
 function load_addons() {
   $addons = get_installed_addons();
   foreach ($addons as $id) {
-    $file = REVISIONIZE_ROOT.'/addons/'.$id.'.php';
+    $file = get_addons_root().'/'.$id.'.php';
     if (file_exists($file)) {
       if (is_addon_pending_delete($id)) {
         uninstall_addon($id, $file);
