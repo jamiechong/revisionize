@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 2.0.1
+ Version: 2.0.2
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -393,7 +393,7 @@ function do_dashboard_widget() {
 // -- Helpers
 
 function user_can_revisionize() {
-  return apply_filters('revisionize_user_can_revisionize', current_user_can('edit_posts'));
+  return apply_filters('revisionize_user_can_revisionize', current_user_can('edit_posts') || current_user_can('edit_pages'));
 }
 
 function user_can_publish_revision() {
