@@ -31,7 +31,11 @@ define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
 define('REVISIONIZE_ROOT', dirname(__FILE__));
 // define('REVISIONIZE_VERSION', '2.1.0'); // not used right now
 
-require_once REVISIONIZE_ROOT.'/settings.php';
+if (is_admin() || is_cron()) {
+  // don't need to do anything settings related if we're not in admin. 
+  // load settings if cron is running in case an addon adds hooks for publish
+  require_once REVISIONIZE_ROOT.'/settings.php';
+}
 
 add_action('init', __NAMESPACE__.'\\init');
 

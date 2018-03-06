@@ -15,11 +15,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+// TODO: Really need to tidy this file up and organize it better. 
+
 namespace Revisionize;
 
 require_once 'addon.php';
 
 load_addons();
+check_for_addon_updates();
 
 add_action('admin_init', __NAMESPACE__.'\\settings_admin_init');
 add_action('admin_menu', __NAMESPACE__.'\\settings_menu');
@@ -183,13 +186,22 @@ function settings_addon_file_html($args) {
 }
 
 function addons_html() {
+  $hasUpdates = false;
   ?>
   <h1>Revisionize Addons</h1>
   <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="https://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
   <div class="rvz-addons rvz-cf">
-    <?php foreach (get_available_addons() as $addon) addon_html($addon); ?>
+    <?php foreach (get_available_addons() as $addon) {
+      addon_html($addon); 
+      $hasUpdates = $hasUpdates || $addon["update_available"];
+    }?>
   </div>
+  <?php if ($hasUpdates): ?>
+  <p>* To install an addon update, visit <a href="https://revisionize.pro/account/" target="_blank">https://revisionize.pro/account/</a> to login to your account.
+    <br/>Find the relevant purchase confirmation and download the updated <em>.rvz</em> file. 
+    <br/>Come back here and upload the addon.</p>
   <?php
+  endif;
 }
 
 function addon_html($addon) {
@@ -204,7 +216,7 @@ function addon_html($addon) {
       <h3><a href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['name'];?></a></h3>
       <?php echo $addon['description']; ?>
       <div class="rvz-meta rvz-cf">
-        <?php if ($addon['installed']): ?>
+      <?php if ($addon['installed']): ?>
         <label>Installed: <?php echo $addon['installed']?></label>
         <label>
           <input type="hidden" name="<?php echo $group?>[_<?php echo $active?>_set]" value="1"/>
@@ -214,9 +226,14 @@ function addon_html($addon) {
           <input type="hidden" name="<?php echo $group?>[_<?php echo $remove?>_set]" value="1"/>
           <input type="checkbox" name="<?php echo $group?>[<?php echo $remove?>]" /> Delete
         </label>
-        <?php else: ?>
-        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['price']?> - <?php echo $addon['button']?></a>
+        <?php if ($addon["update_available"]): ?>
+        <div class="rvz-update-available rvz-cf">
+          <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank">Update Available: <?php echo $addon['version']?></a>    
+        </div>
         <?php endif; ?>
+      <?php else: ?>
+        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['price']?> - <?php echo $addon['button']?></a>
+      <?php endif; ?>
       </div>
     </div>
   </div>
@@ -290,6 +307,7 @@ function uninstall_addon($id, $file) {
     "_addon_${id}_active_set",
     "_addon_${id}_delete_set",
   ), is_multisite());
+  
   unlink($file);
 
   $installed = get_installed_addons();
@@ -306,14 +324,25 @@ function get_available_addons() {
   if ($addons === false) {
     $payload = json_decode(file_get_contents("https://revisionize.pro/rvz-addons/"), true);
     $addons = $payload['addons'];
-    set_transient('revisionize_available_addons', $addons, 4 * 60 * 60); // cache for 4 hours
+    set_transient('revisionize_available_addons', $addons, 6 * 60 * 60); // cache for 6 hours
   }
 
   foreach ($addons as &$addon) {
     $addon["installed"] = array_key_exists($addon["id"], $registered) ? $registered[$addon["id"]] : false;
+    $addon["update_available"] = $addon["installed"] && version_compare($addon["version"], $addon["installed"]) > 0;
   } 
 
   return $addons;
+}
+
+function check_for_addon_updates() {
+  $addons = get_available_addons();
+
+  foreach ($addons as $addon) {
+    if ($addon["update_available"]) {
+      add_action(is_multisite() ? 'network_admin_notices' : 'admin_notices', __NAMESPACE__.'\\notify_needs_update');
+    }
+  }
 }
 
 function get_installed_addons() {
@@ -429,6 +458,13 @@ function notify_updated_settings() {
   echo '<div class="notice updated is-dismissible"><p><strong>Settings saved.</strong></p></div>';  
 }
 
+function notify_needs_update() {
+  if (!is_on_settings_page() && !is_on_network_settings_page()) {
+    $url = is_multisite() ? network_admin_url('settings.php?page=revisionize') : admin_url('options-general.php?page=revisionize');
+    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.$url.'">View settings</a> for details.</p></div>';    
+  }
+}
+
 function settings_css() {
   ?>
   <style type="text/css">
@@ -479,7 +515,7 @@ function settings_css() {
     padding: 15px 15px 55px;
     min-height: 300px;
     position: relative;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
   }
   .rvz-addon h3 {
     margin-top: 0;
@@ -489,6 +525,7 @@ function settings_css() {
   }
   .rvz-addon ul {
     list-style: disc;
+    padding-bottom: 15px;
     padding-left: 25px;
   }
   .rvz-addon .rvz-meta {
@@ -506,6 +543,11 @@ function settings_css() {
   .rvz-addon .rvz-meta label:first-child {
     margin-left: 0;
     float: left;
+  }
+  .rvz-update-available {
+    clear: both;
+    margin-top: 8px;
+    text-align: center;
   }
   </style>  
   <?php
