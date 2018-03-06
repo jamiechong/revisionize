@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.1.0 =
+* Make revisionize and its addon framework work better with Wordpress Network/Multisite installations.
+
 = 2.0.2 = 
 * Generalize user_can_revisionize so that it's true if a user can edit pages.
 
