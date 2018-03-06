@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.0.2 = 
+* Generalize user_can_revisionize so that it's true if a user can edit pages.
+
 = 2.0.1 =
 * Fix Fatal error on 2.0.0 - had forgot to commit settings.php and addon.php. Please update and activate again.
 
