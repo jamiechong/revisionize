@@ -1,13 +1,13 @@
 === Revisionize ===
 Contributors: jamiechong
-Tags: revision, cms, content, staging, stage, draft, variation, scheduling, schedule, change, clone, preview
+Tags: revision, cms, content, staging, stage, draft, content staging, variation, scheduling, schedule, change, clone, preview
 Requires at least: 4.4
 Tested up to: 4.9
 Stable tag: trunk
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Draft up revisions or variations of live, published content. Publish the drafted content manually or with the built-in scheduling system.
+Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
 
 
 == Description ==
@@ -37,7 +37,7 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
-= 2.1.0 =
+= 2.1.1 =
 * Make revisionize and its addon framework work better with Wordpress Network/Multisite installations.
 * Add filter to change the addon install directory.
 * Check for addon updates.
@@ -93,7 +93,7 @@ Please post in the support section for help before leaving a negative review!
 
 == Upgrade Notice ==
 
-= 2.1.0 =
+= 2.1.1 =
 * Improve compatibility with Multisite/Network installations.
 
 = 2.0.1 =

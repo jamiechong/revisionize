@@ -28,6 +28,8 @@ add_action('admin_init', __NAMESPACE__.'\\settings_admin_init');
 add_action('admin_menu', __NAMESPACE__.'\\settings_menu');
 add_action('network_admin_menu', __NAMESPACE__.'\\network_settings_menu');
 add_action('network_admin_edit_revisionize_network_settings', __NAMESPACE__.'\\network_update_settings');
+add_filter('plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\settings_link');
+add_filter('network_admin_plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\network_settings_link');
 
 function settings_admin_init() {
   if (is_on_settings_page()) {
@@ -137,6 +139,8 @@ function network_settings_page() {
   <div class="wrap">
     <?php settings_css(); ?>
     <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+    <p>Note that site specific settings for Revisionize can be found when viewing a site. Such as <a href="<?php echo admin_url('options-general.php?page=revisionize')?>">here</a>.</p>
+
     <form action="edit.php?action=revisionize_network_settings" enctype="multipart/form-data" method="post" class="rvz-settings-form">
     <?php
       settings_fields('revisionize_network');
@@ -551,4 +555,12 @@ function settings_css() {
   }
   </style>  
   <?php
+}
+
+function settings_link($links) {
+  return array_merge($links, array('<a href="'.admin_url('options-general.php?page=revisionize').'">Settings</a>'));
+}
+
+function network_settings_link($links) {
+  return array_merge($links, array('<a href="'.network_admin_url('settings.php?page=revisionize').'">Settings</a>'));
 }
