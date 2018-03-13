@@ -2,8 +2,8 @@
 /*
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
- Description: Stage revisions or variations of live, published content. Publish the staged content manually or with the built-in scheduling system.
- Version: 2.0.2
+ Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
+ Version: 2.1.1
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -29,9 +29,14 @@ namespace Revisionize;
 
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
 define('REVISIONIZE_ROOT', dirname(__FILE__));
-define('REVISIONIZE_VERSION', '2.0.0');
+define('REVISIONIZE_BASE', plugin_basename(__FILE__));
+// define('REVISIONIZE_VERSION', '2.1.0'); // not used right now
 
-require_once REVISIONIZE_ROOT.'/settings.php';
+if (is_admin() || is_cron()) {
+  // don't need to do anything settings related if we're not in admin. 
+  // load settings if cron is running in case an addon adds hooks for publish
+  require_once REVISIONIZE_ROOT.'/settings.php';
+}
 
 add_action('init', __NAMESPACE__.'\\init');
 
