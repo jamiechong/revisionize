@@ -21,15 +21,18 @@ namespace Revisionize;
 
 require_once 'addon.php';
 
-load_addons();
-check_for_addon_updates();
-
+add_action('init', __NAMESPACE__.'\\plugin_init');
 add_action('admin_init', __NAMESPACE__.'\\settings_admin_init');
 add_action('admin_menu', __NAMESPACE__.'\\settings_menu');
 add_action('network_admin_menu', __NAMESPACE__.'\\network_settings_menu');
 add_action('network_admin_edit_revisionize_network_settings', __NAMESPACE__.'\\network_update_settings');
 add_filter('plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\settings_link');
 add_filter('network_admin_plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\network_settings_link');
+
+function plugin_init() {
+  load_addons();
+  check_for_addon_updates();
+}
 
 function settings_admin_init() {
   if (is_on_settings_page()) {
