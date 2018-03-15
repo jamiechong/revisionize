@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.1.2 =
+* Fix issue where addons weren't loaded if the revisionize_addons_root was used. Thanks @piscis
+
 = 2.1.1 =
 * Make revisionize and its addon framework work better with Wordpress Network/Multisite installations.
 * Add filter to change the addon install directory.
