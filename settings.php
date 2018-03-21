@@ -331,9 +331,17 @@ function get_available_addons() {
   $addons = get_transient('revisionize_available_addons');
 
   if ($addons === false) {
-    $payload = json_decode(file_get_contents("https://revisionize.pro/rvz-addons/"), true);
-    $addons = $payload['addons'];
-    set_transient('revisionize_available_addons', $addons, 6 * 60 * 60); // cache for 6 hours
+    $json = file_get_contents("https://revisionize.pro/rvz-addons/");
+    $payload = !empty($json) ? json_decode($json, true) : array();
+    $addons = !empty($payload['addons']) ? $payload['addons'] : array();
+
+    if (!empty($addons)) {
+      set_transient('revisionize_available_addons', $addons, 6 * 60 * 60); // cache for 6 hours
+    } else {
+      // for some reason our addons list is empty. cache this for a shorter time so site perfomance
+      // isn't impacted by repeated network calls.
+      set_transient('revisionize_available_addons', $addons, 15 * 60); // cache for 15 minutes
+    }
   }
 
   foreach ($addons as &$addon) {

@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.1.3 =
+* Fix issue where addons list is empty causing Warnings to be displayed.
+
 = 2.1.2 =
 * Fix issue where addons weren't loaded if the revisionize_addons_root was used. Thanks @piscis
 
