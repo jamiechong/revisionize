@@ -331,7 +331,8 @@ function get_available_addons() {
   $addons = get_transient('revisionize_available_addons');
 
   if ($addons === false) {
-    $json = file_get_contents("https://revisionize.pro/rvz-addons/");
+    $response = wp_remote_get("https://revisionize.pro/rvz-addons/");
+    $json = is_array($response) && !empty($response['body']) ? $response['body'] : '';
     $payload = !empty($json) ? json_decode($json, true) : array();
     $addons = !empty($payload['addons']) ? $payload['addons'] : array();
 
@@ -342,6 +343,11 @@ function get_available_addons() {
       // isn't impacted by repeated network calls.
       set_transient('revisionize_available_addons', $addons, 15 * 60); // cache for 15 minutes
     }
+  }
+
+  // failsafe - really make sure we return an array.
+  if (empty($addons) || !is_array($addons)) {
+    $addons = array();
   }
 
   foreach ($addons as &$addon) {

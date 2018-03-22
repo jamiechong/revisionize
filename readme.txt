@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.1.4 =
+* Fix. Properly fetch addons list.
+
 = 2.1.3 =
 * Fix issue where addons list is empty causing Warnings to be displayed.
 
