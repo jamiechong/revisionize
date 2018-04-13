@@ -22,17 +22,22 @@ namespace Revisionize;
 require_once 'addon.php';
 
 add_action('init', __NAMESPACE__.'\\settings_init');
-add_action('admin_menu', __NAMESPACE__.'\\settings_menu');
-add_action('admin_init', __NAMESPACE__.'\\settings_admin_init');
-add_action('network_admin_menu', __NAMESPACE__.'\\network_settings_menu');
-add_action('network_admin_edit_revisionize_network_settings', __NAMESPACE__.'\\network_update_settings');
-add_filter('plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\settings_link');
-add_filter('network_admin_plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\network_settings_link');
+
+if (is_admin() || is_cron()) {
+  add_action('init', __NAMESPACE__.'\\check_for_addon_updates');
+  add_action('admin_menu', __NAMESPACE__.'\\settings_menu');
+  add_action('admin_init', __NAMESPACE__.'\\settings_admin_init');
+  add_action('network_admin_menu', __NAMESPACE__.'\\network_settings_menu');
+  add_action('network_admin_edit_revisionize_network_settings', __NAMESPACE__.'\\network_update_settings');
+  add_filter('plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\settings_link');
+  add_filter('network_admin_plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\network_settings_link');
+  add_filter('revisionize_keep_original_on_publish', __NAMESPACE__.'\\filter_keep_backup');
+  add_filter('revisionize_preserve_post_date', __NAMESPACE__.'\\filter_preserve_date');
+}
 
 function settings_init() {
-  if (is_admin()) {
+  if (is_admin() || is_cron() || is_admin_bar_showing()) {
     load_addons();
-    check_for_addon_updates();
   }
 }
 
@@ -172,9 +177,9 @@ function do_fields_section($key, $group="revisionize") {
 function setup_basic_settings() {
   add_settings_section('revisionize_section_basic', '', '__return_null', 'revisionize');  
 
-  input_setting('checkbox', 'Keep Backup', 'keep_backup', "After publishing the revision, the previously live post will be kept around and marked as a backup revision of the new version.", true, 'revisionize_section_basic', 'revisionize_keep_original_on_publish', __NAMESPACE__.'\\filter_keep_backup');
+  input_setting('checkbox', 'Keep Backup', 'keep_backup', "After publishing the revision, the previously live post will be kept around and marked as a backup revision of the new version.", true, 'revisionize_section_basic');
 
-  input_setting('checkbox', 'Preserve Date', 'preserve_date', "The date of the original post will be maintained even if the revisionized post date changes. In particular, a scheduled revision won't modify the post date once it's published.", true, 'revisionize_section_basic', 'revisionize_preserve_post_date', __NAMESPACE__.'\\filter_preserve_date');
+  input_setting('checkbox', 'Preserve Date', 'preserve_date', "The date of the original post will be maintained even if the revisionized post date changes. In particular, a scheduled revision won't modify the post date once it's published.", true, 'revisionize_section_basic');
 }
 
 function setup_addon_settings($group="revisionize") {
@@ -420,7 +425,7 @@ function filter_preserve_date($b) {
 
 // basic inputs for now
 // $type: text|email|number|checkbox
-function input_setting($type, $name, $key, $description, $default, $section, $filter=null, $handler=null) {
+function input_setting($type, $name, $key, $description, $default, $section) {
   add_settings_field('revisionize_setting_'.$key, $name, __NAMESPACE__.'\\field_input', 'revisionize', $section, array(
     'type' => $type,
     'label_for' => 'revisionize_setting_'.$key,
@@ -428,10 +433,6 @@ function input_setting($type, $name, $key, $description, $default, $section, $fi
     'description' => $description,
     'default' => $default
   ));
-
-  if ($filter && $handler) {
-    add_filter($filter, $handler);
-  }
 }
 
 function field_input($args) {

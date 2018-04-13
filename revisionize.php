@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.1.4
+ Version: 2.2.0
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -32,11 +32,7 @@ define('REVISIONIZE_ROOT', dirname(__FILE__));
 define('REVISIONIZE_BASE', plugin_basename(__FILE__));
 // define('REVISIONIZE_VERSION', '2.1.0'); // not used right now
 
-if (is_admin() || is_cron()) {
-  // don't need to do anything settings related if we're not in admin. 
-  // load settings if cron is running in case an addon adds hooks for publish
-  require_once REVISIONIZE_ROOT.'/settings.php';
-}
+require_once REVISIONIZE_ROOT.'/settings.php';
 
 add_action('init', __NAMESPACE__.'\\init');
 
@@ -68,6 +64,7 @@ function init() {
     add_action('transition_post_status', __NAMESPACE__.'\\on_publish_post', 10, 3);
   }
 
+  add_action('admin_bar_menu', __NAMESPACE__.'\\admin_bar_item', 100);
 }
 
 // Action for ACF users. Will publish the revision only if user_can_publish_revision.
@@ -393,6 +390,20 @@ function do_dashboard_widget() {
   }
 
   echo '</ul>';
+}
+
+function admin_bar_item($admin_bar) {
+  global $post;
+  if (is_post_type_enabled() && is_create_enabled($post)) {
+    $admin_bar->add_menu(array(
+      'id' => 'revisionize',
+      'title' => get_create_button_text(),
+      'href' => get_create_link($post),
+      'meta' => array(
+        'title' => esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN)),
+      ),
+    ));
+  }
 }
 
 // -- Helpers
