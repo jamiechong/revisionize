@@ -37,6 +37,10 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.2.0 = 
+* Fix. Use settings when cron publishes a scheduled post.
+* Feature. Revisionize link added to admin bar.
+
 = 2.1.4 =
 * Fix. Properly fetch addons list.
 
