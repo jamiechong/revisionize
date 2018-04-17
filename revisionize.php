@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.2.0
+ Version: 2.2.1
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -394,7 +394,7 @@ function do_dashboard_widget() {
 
 function admin_bar_item($admin_bar) {
   global $post;
-  if (is_post_type_enabled() && is_create_enabled($post)) {
+  if (!empty($post) && is_post_type_enabled() && is_create_enabled($post)) {
     $admin_bar->add_menu(array(
       'id' => 'revisionize',
       'title' => get_create_button_text(),

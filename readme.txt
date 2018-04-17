@@ -1,6 +1,6 @@
 === Revisionize ===
 Contributors: jamiechong
-Tags: revision, cms, content, staging, stage, draft, content staging, variation, scheduling, schedule, change, clone, preview
+Tags: revision, schedule, cron, staging, variation, publishing, content, stage
 Requires at least: 4.4
 Tested up to: 4.9
 Stable tag: trunk
@@ -36,6 +36,9 @@ Please post in the support section for help before leaving a negative review!
 5. The original post is kept around as a revision just in case you want to revert back to the way things were. 
 
 == Changelog ==
+
+= 2.2.1 =
+* Fix. Notices when admin bar shown on non-edit pages. Thanks @kshaner.
 
 = 2.2.0 = 
 * Fix. Use settings when cron publishes a scheduled post.
