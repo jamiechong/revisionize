@@ -379,7 +379,9 @@ function get_installed_addons() {
 }
 
 function get_addons_root() {
-  return apply_filters('revisionize_addons_root', REVISIONIZE_ROOT.'/addons');
+  // version 2.2.3 - move the addons_root to a safe directory
+  $uploads = wp_upload_dir();
+  return apply_filters('revisionize_addons_root', $uploads['basedir'].'/revisionize/addons');
 }
 
 function set_installed_addons($installed) {
@@ -394,6 +396,7 @@ function load_addons() {
   $addons = get_installed_addons();
   foreach ($addons as $id) {
     $file = get_addons_root().'/'.$id.'.php';
+
     if (file_exists($file)) {
       if (is_addon_pending_delete($id)) {
         uninstall_addon($id, $file);
@@ -401,6 +404,10 @@ function load_addons() {
         require_once $file;
         \RevisionizeAddon::create($id);        
       }
+    } else {
+      // system thinks addon is installed, but the file doesn't exist. Probably because it got wiped during a core plugin update. 
+      // v2.2.3 changes the addons_root directory to wp-content/uploads/revisionize/addons
+      add_action(is_multisite() ? 'network_admin_notices' : 'admin_notices', __NAMESPACE__.'\\notify_fix_addons');
     }
   }
 
@@ -584,3 +591,8 @@ function settings_link($links) {
 function network_settings_link($links) {
   return array_merge($links, array('<a href="'.network_admin_url('settings.php?page=revisionize').'">Settings</a>'));
 }
+
+function notify_fix_addons() {
+  echo '<div class="notice notice-error is-dismissible"><p>Please re-install your <a href="https://revisionize.pro/account/" target="_blank">Revisionize addons</a>.<br/>There was a problem where updates to the core Revisionize plugin would inadvertantly delete your installed addons.<br/>This has been fixed in version 2.2.3. Sorry for the inconvenience!</p></div>';
+}
+

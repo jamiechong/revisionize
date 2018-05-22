@@ -37,6 +37,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.2.3 =
+* Fix. Move addons directory to a location safe from overwrites. 
+
 = 2.2.2 =
 * New. Action for developers to add hook after a revision is created.
 * Fix. Fatal error when checking is_wp_revision_different.
