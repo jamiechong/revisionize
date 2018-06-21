@@ -187,7 +187,9 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   }
   else {
     $author = wp_get_current_user();
-    $author_id = $author->ID;
+    // If a cron task is running at this point, the current author ID will be empty
+    // so we should be using the $author_id from above.
+    $author_id = ( ! empty( $author->ID ) ? $author->ID : $author_id );
     $post_status = $status;
   }
 
