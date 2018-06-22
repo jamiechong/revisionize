@@ -37,6 +37,10 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.2.4 =
+* New. Action for developers. revisionize_after_copy_post
+* Fix. Ensure author ID is set when a backup revision is created during cron.
+
 = 2.2.3 =
 * Fix. Move addons directory to a location safe from overwrites. 
 
