@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.2.3
+ Version: 2.2.4
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -184,11 +184,16 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   if ($to) {
     $author_id = $to->post_author;  // maintain original author.
-  }
-  else {
-    $author = wp_get_current_user();
-    $author_id = $author->ID;
+  } else {
     $post_status = $status;
+    $author = wp_get_current_user();
+    
+    // If we're creating a backup copy of the original and a cron task
+    // is running at this point, the current author ID will be empty,
+    // so don't overwrite the $author_id of the given $post.
+    if (!empty($author->ID)) {
+      $author_id = $author->ID;
+    }
   }
 
   $data = array(
@@ -250,6 +255,9 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   // apply revisionized post_meta to the original post.
   copy_post_meta_info($new_id, $post);
 
+  // Let others know a copy has been made
+  do_action('revisionize_after_copy_post', $new_id, $post);
+ 
   return $new_id;
 }
 
@@ -289,11 +297,13 @@ function copy_post_meta_info($new_id, $post) {
 
   $meta_keys = get_post_custom_keys($post->ID);
 
-  foreach ($meta_keys as $meta_key) {
-    $meta_values = get_post_custom_values($meta_key, $post->ID);
-    foreach ($meta_values as $meta_value) {
-      $meta_value = maybe_unserialize($meta_value);
-      add_metadata('post', $new_id, $meta_key, $meta_value);
+  if (!empty($meta_keys)) {
+    foreach ($meta_keys as $meta_key) {
+      $meta_values = get_post_custom_values($meta_key, $post->ID);
+      foreach ($meta_values as $meta_value) {
+        $meta_value = maybe_unserialize($meta_value);
+        add_metadata('post', $new_id, $meta_key, $meta_value);
+      }
     }
   }
 }
