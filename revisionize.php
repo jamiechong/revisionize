@@ -251,7 +251,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   copy_post_meta_info($new_id, $post);
 
   // Let others know a copy has been made
-  do_action( 'revisionize_copy_post_finish', $new_id, $post );
+  do_action('revisionize_after_copy_post', $new_id, $post);
  
   return $new_id;
 }
