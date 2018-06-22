@@ -292,11 +292,13 @@ function copy_post_meta_info($new_id, $post) {
 
   $meta_keys = get_post_custom_keys($post->ID);
 
-  foreach ($meta_keys as $meta_key) {
-    $meta_values = get_post_custom_values($meta_key, $post->ID);
-    foreach ($meta_values as $meta_value) {
-      $meta_value = maybe_unserialize($meta_value);
-      add_metadata('post', $new_id, $meta_key, $meta_value);
+  if (!empty($meta_keys)) {
+    foreach ($meta_keys as $meta_key) {
+      $meta_values = get_post_custom_values($meta_key, $post->ID);
+      foreach ($meta_values as $meta_value) {
+        $meta_value = maybe_unserialize($meta_value);
+        add_metadata('post', $new_id, $meta_key, $meta_value);
+      }
     }
   }
 }
