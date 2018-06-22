@@ -184,13 +184,16 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   if ($to) {
     $author_id = $to->post_author;  // maintain original author.
-  }
-  else {
-    $author = wp_get_current_user();
-    // If a cron task is running at this point, the current author ID will be empty
-    // so we should be using the $author_id from above.
-    $author_id = ( ! empty( $author->ID ) ? $author->ID : $author_id );
+  } else {
     $post_status = $status;
+    $author = wp_get_current_user();
+    
+    // If we're creating a backup copy of the original and a cron task
+    // is running at this point, the current author ID will be empty,
+    // so don't overwrite the $author_id of the given $post.
+    if (!empty($author->ID)) {
+      $author_id = $author->ID;
+    }
   }
 
   $data = array(
