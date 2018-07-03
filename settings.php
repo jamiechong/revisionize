@@ -381,7 +381,14 @@ function get_installed_addons() {
 function get_addons_root() {
   // version 2.2.3 - move the addons_root to a safe directory
   $uploads = wp_upload_dir();
-  return apply_filters('revisionize_addons_root', $uploads['basedir'].'/revisionize/addons');
+  $path = $uploads['basedir'];
+
+  if (is_multisite() && !is_network_admin()) {
+    // when network admin we get back /wp-content/uploads/
+    // when in a Site we get back /wp-content/uploads/sites/site-ID
+    $path .= '/../..';
+  }
+  return apply_filters('revisionize_addons_root', $path.'/revisionize/addons');
 }
 
 function set_installed_addons($installed) {
