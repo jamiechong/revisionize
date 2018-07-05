@@ -341,17 +341,17 @@ function get_available_addons() {
     $payload = !empty($json) ? json_decode($json, true) : array();
     $addons = !empty($payload['addons']) ? $payload['addons'] : array();
 
-    if (!empty($addons)) {
+    if (remote_addons_valid($addons)) {
       set_transient('revisionize_available_addons', $addons, 6 * 60 * 60); // cache for 6 hours
     } else {
       // for some reason our addons list is empty. cache this for a shorter time so site perfomance
       // isn't impacted by repeated network calls.
-      set_transient('revisionize_available_addons', $addons, 15 * 60); // cache for 15 minutes
+      set_transient('revisionize_available_addons', $addons, 5 * 60); // cache for 5 minutes
     }
   }
 
-  // failsafe - really make sure we return an array.
-  if (empty($addons) || !is_array($addons)) {
+  // failsafe - really make sure we have valid addons
+  if (empty($addons) || !is_array($addons) || !remote_addons_valid($addons)) {
     $addons = array();
   }
 
@@ -361,6 +361,15 @@ function get_available_addons() {
   } 
 
   return $addons;
+}
+
+function remote_addons_valid($addons) {
+  return !empty($addons) && count($addons) > 0 && all_keys_set($addons, "id") && all_keys_set($addons, "version");
+}
+
+function all_keys_set($arr, $key) {
+  $s = implode('', array_map(function($obj) use ($key) { return empty($obj[$key]) ? "" : $obj[$key]; }, $arr));
+  return !empty($s);
 }
 
 function check_for_addon_updates() {
