@@ -283,12 +283,12 @@ function remove_setting($keys, $multisite=false) {
 
 function is_on_settings_page() {
   global $pagenow;
-  return $pagenow == 'options-general.php' && $_GET['page'] == 'revisionize';
+  return $pagenow == 'options-general.php' && isset($_GET['page']) && $_GET['page'] == 'revisionize';
 }
 
 function is_on_network_settings_page() {
   global $pagenow;
-  return $pagenow == 'settings.php' && $_GET['page'] == 'revisionize';  
+  return $pagenow == 'settings.php' && isset($_GET['page']) && $_GET['page'] == 'revisionize';
 }
 
 function on_settings_saved($settings=null) {
