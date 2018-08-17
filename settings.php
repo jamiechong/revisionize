@@ -19,7 +19,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Revisionize;
 
-require_once 'addon.php';
+require_once __DIR__ .'/addon.php';
 
 add_action('init', __NAMESPACE__.'\\settings_init');
 
@@ -246,7 +246,7 @@ function addon_html($addon) {
         </div>
         <?php endif; ?>
       <?php else: ?>
-        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['price']?> - <?php echo $addon['button']?></a>
+        <a class="rvz-button button" href="<?php echo esc_url( $addon['url'])?>" target="_blank"><?php echo esc_html($addon['price'])?> - <?php echo $addon['button']?></a>
       <?php endif; ?>
       </div>
     </div>
@@ -464,7 +464,7 @@ function field_input($args) {
   $key = esc_attr($args['key']);
   $value = '';
 
-  if ($type == 'checkbox') {
+  if ($type === 'checkbox') {
     if (is_checkbox_checked($key, $args['default'])) {
       $value = 'checked';
     }
@@ -473,12 +473,12 @@ function field_input($args) {
   }
   ?>
   <div>
-    <?php if ($type=="checkbox"): ?>
-    <input type="hidden" name="revisionize_settings[_<?php echo $key?>_set]" value="1"/>
+    <?php if ($type==="checkbox"): ?>
+    <input type="hidden" name="revisionize_settings[_<?php echo esc_attr($key)?>_set]" value="1"/>
     <?php endif; ?>
     <label>
-      <input id="<?php echo $id?>" type="<?php echo $type?>" name="revisionize_settings[<?php echo $key?>]" <?php echo $value?>/> 
-      <?php echo $args['description']?>
+      <input id="<?php echo esc_attr($id)?>" type="<?php echo esc_attr($type)?>" name="revisionize_settings[<?php echo esc_attr($key)?>]" <?php echo esc_attr($value)?>/>
+      <?php echo esc_html($args['description']);?>
     </label>
   </div>  
   <?php  
@@ -497,8 +497,7 @@ function is_checkbox_set($key, $multisite=false) {
 }
 
 function notify_new_settings() {
-  $notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.admin_url('options-general.php?page=revisionize').'">Check it out!</a></strong>';
-  echo '<div class="notice notice-info is-dismissible"><p>'.$notice.'</p></div>';  
+  echo '<div class="notice notice-info is-dismissible"><p><strong>Revisionize</strong> has a new settings panel. <strong><a href="'.esc_url( admin_url('options-general.php?page=revisionize')).'">Check it out!</a></strong></p></div>';
 }
 
 function notify_updated_settings() {
@@ -508,7 +507,7 @@ function notify_updated_settings() {
 function notify_needs_update() {
   if (!is_on_settings_page() && !is_on_network_settings_page()) {
     $url = is_multisite() ? network_admin_url('settings.php?page=revisionize') : admin_url('options-general.php?page=revisionize');
-    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.$url.'">View settings</a> for details.</p></div>';    
+    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.esc_url($url).'">View settings</a> for details.</p></div>';
   }
 }
 
