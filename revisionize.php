@@ -95,7 +95,7 @@ function on_publish_post($new_status, $old_status, $post, $from="TPS") {
 }
 
 function create() {
-  $id = intval($_REQUEST['post']);
+  $id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
 
   // make sure the clicked link is a valid nonce. Make sure the user can revisionize.
   if (user_can_revisionize() && check_admin_referer('revisionize-create-'.$id)) {
@@ -111,7 +111,7 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
+  wp_die(esc_html__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
 }
 
 function create_revision($post, $is_original=false) {
@@ -322,11 +322,11 @@ function post_button() {
   if (!$parent): ?>
     <div style="text-align: right; margin-bottom: 10px;">
       <a class="button"
-        href="<?php echo esc_url(get_create_link($post)) ?>"><?php echo esc_html(get_create_button_text()); ?>
+        href="<?php echo esc_url(get_create_link($post)); ?>"><?php echo esc_html(get_create_button_text()); ?>
       </a>
     </div>
   <?php else: ?>
-    <div><em><?php echo sprintf(esc_html__('WARNING: Publishing this revision will overwrite %s.',REVISIONIZE_I18N_DOMAIN), get_parent_editlink($parent, __('its original')))?></em></div>
+    <div><em><?php echo sprintf(esc_html__('WARNING: Publishing this revision will overwrite %s.',REVISIONIZE_I18N_DOMAIN), get_parent_editlink($parent, esc_html__('its original'))); ?></em></div>
   <?php endif;
 }
 
@@ -375,16 +375,16 @@ function add_dashboard_widget() {
 
 // Echo the content of the dashboard widget.
 function do_dashboard_widget() {
-  $posts = get_posts(array(
-    'post_type'   => 'any',
-    'post_status' => 'pending',
-    'meta_query'  => array(
-      array(
-        'key'     => '_post_revision_of',
-        'compare' => 'EXISTS',
-        )
-      )
-    ));
+  $posts_query = new \WP_Query( array(
+	  'post_type'   => 'any',
+	  'post_status' => 'pending',
+	  'meta_query'  => array(
+		  array(
+			  'key'     => '_post_revision_of',
+			  'compare' => 'EXISTS',
+		  )
+	  ) ) );
+  $posts = $posts_query->posts;
 
   if (empty($posts)) {
     esc_html_e('No posts need reviewed at this time!', 'revisionize');
@@ -455,7 +455,7 @@ function is_original_post($post) {
 }
 
 function is_acf_post() {
-  return has_action('acf/save_post') && (!empty($_POST['acf']) || !empty($_POST['fields']));
+  return has_action('acf/save_post') && (!empty($_POST['acf'])) || (!empty($_POST['fields']));
 }
 
 function is_post_date_preserved($id) {
@@ -495,17 +495,19 @@ function get_current_post_type() {
   global $post, $typenow, $current_screen, $pagenow;
   $type = null;
 
+  $post_type = filter_input( INPUT_GET, 'post_type', FILTER_SANITIZE_STRING );
+  $current_post = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
   if ($post && $post->post_type) {
     $type = $post->post_type;
   } else if ($typenow) {
     $type = $typenow;
   } else if ($current_screen && $current_screen->post_type) {
     $type = $current_screen->post_type;
-  } else if (isset($_REQUEST['post_type'])) {
-    $type = sanitize_key($_REQUEST['post_type']);
-  } else if (isset($_REQUEST['post'])) {
-    $type = get_post_type(intval($_REQUEST['post']));
-  } else if ($pagenow == 'edit.php') {
+  } else if (!empty($post_type)) {
+    $type = sanitize_key($post_type);
+  } else if (isset($current_post)) {
+    $type = get_post_type(intval($current_post));
+  } else if ($pagenow === 'edit.php') {
     $type = 'post';
   }
 
@@ -518,5 +520,5 @@ function get_latest_wp_revision($id) {
 }
 
 function is_wp_revision_different($a, $b) {
-  return $a && !$b || !$a && $b || $a && $b && $a->ID != $b->ID;
+  return $a && !$b || !$a && $b || $a && $b && $a->ID !== $b->ID;
 }
