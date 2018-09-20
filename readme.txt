@@ -37,6 +37,10 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.2.8 =
+* Fix. Show settings on default multisite page. 
+* Fix. Prevent non super admins from uploading addons on multisite. 
+
 = 2.2.7 =
 * Fix. Undefined index errors. 
 

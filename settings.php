@@ -292,7 +292,7 @@ function is_on_network_settings_page() {
 }
 
 function on_settings_saved($settings=null) {
-  if (!empty($_FILES['revisionize_addon_file']['tmp_name'])) {
+  if (current_user_can('install_plugins') && !empty($_FILES['revisionize_addon_file']['tmp_name'])) {
     install_addon($_FILES['revisionize_addon_file']['tmp_name']);
   }
   return $settings;
@@ -395,7 +395,7 @@ function get_addons_root() {
   if (is_multisite() && !is_network_admin()) {
     // when network admin we get back /wp-content/uploads/
     // when in a Site we get back /wp-content/uploads/sites/site-ID
-    $path .= '/../..';
+    $path = str_replace('/sites/'.get_current_blog_id(), '', $path);
   }
   return apply_filters('revisionize_addons_root', $path.'/revisionize/addons');
 }
