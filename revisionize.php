@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.2.8
+ Version: 2.3.0
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -182,10 +182,13 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   $author_id = $post->post_author;
   $post_status = $post->post_status;
 
-  if ($to) {
+  if (!$to) {
+    $post_status = $status;
+  }
+
+  if ($to && is_original_author_preserved($to->ID)) {
     $author_id = $to->post_author;  // maintain original author.
   } else {
-    $post_status = $status;
     $author = wp_get_current_user();
     
     // If we're creating a backup copy of the original and a cron task
@@ -461,6 +464,10 @@ function is_acf_post() {
 
 function is_post_date_preserved($id) {
   return apply_filters('revisionize_preserve_post_date', true, $id) === true;
+}
+
+function is_original_author_preserved($id) {
+  return apply_filters('revisionize_preserve_author', true, $id) === true;  
 }
 
 function show_dashboard_widget() {

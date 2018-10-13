@@ -33,6 +33,7 @@ if (is_admin() || is_cron()) {
   add_filter('network_admin_plugin_action_links_'.REVISIONIZE_BASE, __NAMESPACE__.'\\network_settings_link');
   add_filter('revisionize_keep_original_on_publish', __NAMESPACE__.'\\filter_keep_backup');
   add_filter('revisionize_preserve_post_date', __NAMESPACE__.'\\filter_preserve_date');
+  add_filter('revisionize_preserve_author', __NAMESPACE__.'\\filter_preserve_author');
 }
 
 function settings_init() {
@@ -180,6 +181,8 @@ function setup_basic_settings() {
   input_setting('checkbox', 'Keep Backup', 'keep_backup', "After publishing the revision, the previously live post will be kept around and marked as a backup revision of the new version.", true, 'revisionize_section_basic');
 
   input_setting('checkbox', 'Preserve Date', 'preserve_date', "The date of the original post will be maintained even if the revisionized post date changes. In particular, a scheduled revision won't modify the post date once it's published.", true, 'revisionize_section_basic');
+
+  input_setting('checkbox', 'Preserve Author', 'preserve_author', "The author of the original post will be maintained even if the author of the revisionized post differs.", true, 'revisionize_section_basic');  
 }
 
 function setup_addon_settings($group="revisionize") {
@@ -444,6 +447,10 @@ function filter_keep_backup($b) {
 
 function filter_preserve_date($b) {
   return is_checkbox_checked('preserve_date', $b);
+}
+
+function filter_preserve_author($b) {
+  return is_checkbox_checked('preserve_author', $b);  
 }
 
 // basic inputs for now

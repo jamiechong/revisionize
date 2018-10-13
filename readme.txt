@@ -18,6 +18,8 @@ On a busy site you can't afford to make changes to *live*, *published* posts wit
 
 Visit [revisionize.pro](https://revisionize.pro) to add functionality that makes Revisionize even more powerful. 
 
+
+
 = Compatible with =
 
 * [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/)
@@ -36,6 +38,9 @@ Please post in the support section for help before leaving a negative review!
 5. The original post is kept around as a revision just in case you want to revert back to the way things were. 
 
 == Changelog ==
+
+= 2.3.0 =
+* New. Setting to preserve original author or overwrite it with author who is revisionizing. 
 
 = 2.2.8 =
 * Fix. Show settings on default multisite page. 
