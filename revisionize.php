@@ -30,7 +30,6 @@ namespace Revisionize;
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
 define('REVISIONIZE_ROOT', dirname(__FILE__));
 define('REVISIONIZE_BASE', plugin_basename(__FILE__));
-// define('REVISIONIZE_VERSION', '2.1.0'); // not used right now
 
 require_once REVISIONIZE_ROOT.'/settings.php';
 
@@ -78,12 +77,12 @@ function acf_on_publish_post($post_id) {
 function on_publish_post($new_status, $old_status, $post, $from="TPS") {
 
   // fix issue where revisions were not published when ACF 5 was installed, but this post type didn't have any custom fields.
-  if ($from=="TPS" && !is_cron() && is_acf_post()) {
+  if ($from==="TPS" && !is_cron() && is_acf_post()) {
     return;
   }
 
 
-  if ($post && $new_status == 'publish') {
+  if ($post && $new_status === 'publish') {
     $id = get_revision_of($post);
     if ($id) {
       $original = get_post($id);
@@ -96,7 +95,7 @@ function on_publish_post($new_status, $old_status, $post, $from="TPS") {
 }
 
 function create() {
-  $id = intval($_REQUEST['post']);
+  $id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
 
   // make sure the clicked link is a valid nonce. Make sure the user can revisionize.
   if (user_can_revisionize() && check_admin_referer('revisionize-create-'.$id)) {
@@ -112,7 +111,7 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
+  wp_die(esc_html__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
 }
 
 function create_revision($post, $is_original=false) {
@@ -175,7 +174,7 @@ function on_delete_post($post_id) {
 }
 
 function copy_post($post, $to=null, $parent_id=null, $status='draft') {
-  if ($post->post_type == 'revision') {
+  if ($post->post_type === 'revision') {
     return;
   }
 
@@ -190,7 +189,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $author_id = $to->post_author;  // maintain original author.
   } else {
     $author = wp_get_current_user();
-    
+
     // If we're creating a backup copy of the original and a cron task
     // is running at this point, the current author ID will be empty,
     // so don't overwrite the $author_id of the given $post.
@@ -233,7 +232,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     }
 
     if (is_acf_post() && is_acf_fields_different($to, $post)) {
-      // this will force WP to create a new revision. 
+      // this will force WP to create a new revision.
       add_filter('wp_save_post_revision_post_has_changed', '__return_true');
     }
 
@@ -244,7 +243,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $revision_after = get_latest_wp_revision($new_id);
 
     if (is_wp_revision_different($revision_before, $revision_after) && $revision_after) {
-      copy_post_meta_info($revision_after->ID, $post);  
+      copy_post_meta_info($revision_after->ID, $post);
     }
 
     if (is_cron()) {
@@ -260,7 +259,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   // Let others know a copy has been made
   do_action('revisionize_after_copy_post', $new_id, $post);
- 
+
   return $new_id;
 }
 
@@ -314,7 +313,7 @@ function copy_post_meta_info($new_id, $post) {
 function is_acf_fields_different($a, $b) {
   $afields = get_field_objects($a->ID, array('format_value' => false));
   $bfields = get_field_objects($b->ID, array('format_value' => false));
-  return $afields != $bfields;
+  return $afields !== $bfields;
 }
 
 // -- Admin UI (buttons, links, etc)
@@ -326,18 +325,18 @@ function post_button() {
   if (!$parent): ?>
     <div style="text-align: right; margin-bottom: 10px;">
       <a class="button"
-        href="<?php echo get_create_link($post) ?>"><?php echo get_create_button_text(); ?>
+        href="<?php echo esc_url(get_create_link($post)); ?>"><?php echo esc_html(get_create_button_text()); ?>
       </a>
     </div>
   <?php else: ?>
-    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.'), get_parent_editlink($parent, __('its original')))?></em></div>
+    <div><em><?php echo sprintf(esc_html__('WARNING: Publishing this revision will overwrite %s.',REVISIONIZE_I18N_DOMAIN), get_parent_editlink($parent, esc_html__('its original'))); ?></em></div>
   <?php endif;
 }
 
 // Filter for post_row_actions/page_row_actions which is only added if user_can_revisionize
 function admin_actions($actions, $post) {
   if (is_create_enabled($post)) {
-    $actions['create_revision'] = '<a href="'.get_create_link($post).'" title="'
+    $actions['create_revision'] = '<a href="'. esc_url( get_create_link( $post ) ).'" title="'
       . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
       . '">' . get_create_button_text() . '</a>';
   }
@@ -359,10 +358,10 @@ function notice() {
   global $post;
   $parent = get_parent_post($post);
   $screen = get_current_screen();
-  if ($screen->base == 'post' && $parent):
+  if ($screen->base === 'post' && $parent):
   ?>
   <div class="notice notice-warning">
-      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', REVISIONIZE_I18N_DOMAIN), get_parent_permalink($parent)); ?></p>
+      <p><?php echo sprintf(esc_html__('Currently editing a revision of %s. Publishing this post will overwrite it.', REVISIONIZE_I18N_DOMAIN), get_parent_permalink($parent)); ?></p>
   </div>
   <?php
   endif;
@@ -372,35 +371,35 @@ function notice() {
 function add_dashboard_widget() {
   wp_add_dashboard_widget(
     'revisionize-posts-needing-review',    // ID of the widget.
-    __('Revisionized Posts Needing Review'),                // Title of the widget.
+    esc_html__('Revisionized Posts Needing Review'),                // Title of the widget.
     __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
   );
 }
 
 // Echo the content of the dashboard widget.
 function do_dashboard_widget() {
-  $posts = get_posts(array(
-    'post_type'   => 'any',
-    'post_status' => 'pending',
-    'meta_query'  => array(
-      array(
-        'key'     => '_post_revision_of',
-        'compare' => 'EXISTS',
-        )
-      )
-    ));
+  $posts_query = new \WP_Query( array(
+	  'post_type'   => 'any',
+	  'post_status' => 'pending',
+	  'meta_query'  => array(
+		  array(
+			  'key'     => '_post_revision_of',
+			  'compare' => 'EXISTS',
+		  )
+	  ) ) );
+  $posts = $posts_query->posts;
 
   if (empty($posts)) {
-    _e('No posts need reviewed at this time!', 'revisionize');
+    esc_html_e('No posts need reviewed at this time!', 'revisionize');
   }
 
   echo '<ul>';
 
   foreach ($posts as $post) {
     printf('<li><a href="%s">%s</a> - %s</li>',
-      get_edit_post_link($post->ID),
+      esc_url( get_edit_post_link( $post->ID ) ),
       get_the_title($post->ID),
-      get_the_author_meta('nicename', $post->post_author)
+      esc_html( get_the_author_meta( 'nicename', $post->post_author ) )
     );
   }
 
@@ -446,7 +445,7 @@ function is_ajax() {
 function is_post_type_enabled() {
   $type = get_current_post_type();
   $excluded = apply_filters('revisionize_exclude_post_types', array('acf', 'attachment'));
-  return empty($type) || !in_array($type, $excluded);
+  return empty($type) || !in_array($type, $excluded, true);
 }
 
 function is_create_enabled($post) {
@@ -459,7 +458,7 @@ function is_original_post($post) {
 }
 
 function is_acf_post() {
-  return has_action('acf/save_post') && (!empty($_POST['acf']) || !empty($_POST['fields']));
+  return has_action('acf/save_post') && (!empty($_POST['acf'])) || (!empty($_POST['fields']));
 }
 
 function is_post_date_preserved($id) {
@@ -487,11 +486,11 @@ function get_create_button_text() {
 }
 
 function get_parent_editlink($parent, $s=null) {
-  return sprintf('<a href="%s">%s</a>', get_edit_post_link($parent->ID), $s ? $s : $parent->post_title);
+  return sprintf( '<a href="%s">%s</a>', esc_url(get_edit_post_link($parent->ID)), $s ? $s : $parent->post_title);
 }
 
 function get_parent_permalink($parent) {
-  return sprintf('<a href="%s" target="_blank">%s</a>', get_permalink($parent->ID), $parent->post_title);
+  return sprintf('<a href="%s" target="_blank">%s</a>', esc_url(get_permalink($parent->ID)), esc_html($parent->post_title));
 }
 
 function get_parent_post($post) {
@@ -503,17 +502,19 @@ function get_current_post_type() {
   global $post, $typenow, $current_screen, $pagenow;
   $type = null;
 
+  $post_type = filter_input( INPUT_GET, 'post_type', FILTER_SANITIZE_STRING );
+  $current_post = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
   if ($post && $post->post_type) {
     $type = $post->post_type;
   } else if ($typenow) {
     $type = $typenow;
   } else if ($current_screen && $current_screen->post_type) {
     $type = $current_screen->post_type;
-  } else if (isset($_REQUEST['post_type'])) {
-    $type = sanitize_key($_REQUEST['post_type']);
-  } else if (isset($_REQUEST['post'])) {
-    $type = get_post_type($_REQUEST['post']);
-  } else if ($pagenow == 'edit.php') {
+  } else if (!empty($post_type)) {
+    $type = sanitize_key($post_type);
+  } else if (isset($current_post)) {
+    $type = get_post_type(intval($current_post));
+  } else if ($pagenow === 'edit.php') {
     $type = 'post';
   }
 
@@ -526,5 +527,5 @@ function get_latest_wp_revision($id) {
 }
 
 function is_wp_revision_different($a, $b) {
-  return $a && !$b || !$a && $b || $a && $b && $a->ID != $b->ID;
+  return $a && !$b || !$a && $b || $a && $b && $a->ID !== $b->ID;
 }
