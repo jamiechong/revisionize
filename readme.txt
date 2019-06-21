@@ -39,6 +39,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.3.1 =
+* Fix. Add missing i18n domain.
+
 = 2.3.0 =
 * New. Setting to preserve original author or overwrite it with author who is revisionizing. 
 

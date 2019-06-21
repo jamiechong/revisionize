@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.0
+ Version: 2.3.1
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -330,7 +330,7 @@ function post_button() {
       </a>
     </div>
   <?php else: ?>
-    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.'), get_parent_editlink($parent, __('its original')))?></em></div>
+    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.', REVISIONIZE_I18N_DOMAIN), get_parent_editlink($parent, __('its original', REVISIONIZE_I18N_DOMAIN)))?></em></div>
   <?php endif;
 }
 
@@ -372,7 +372,7 @@ function notice() {
 function add_dashboard_widget() {
   wp_add_dashboard_widget(
     'revisionize-posts-needing-review',    // ID of the widget.
-    __('Revisionized Posts Needing Review'),                // Title of the widget.
+    __('Revisionized Posts Needing Review', REVISIONIZE_I18N_DOMAIN),                // Title of the widget.
     __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
   );
 }
