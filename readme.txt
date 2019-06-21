@@ -2,7 +2,7 @@
 Contributors: jamiechong
 Tags: revision, schedule, cron, staging, variation, publishing, content, stage
 Requires at least: 4.4
-Tested up to: 4.9
+Tested up to: 5.2.2
 Stable tag: trunk
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -18,13 +18,17 @@ On a busy site you can't afford to make changes to *live*, *published* posts wit
 
 Visit [revisionize.pro](https://revisionize.pro) to add functionality that makes Revisionize even more powerful. 
 
-
-
 = Compatible with =
 
 * [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/)
 * [Public Post Preview](https://wordpress.org/plugins/public-post-preview/)
 * *Let us know other plugins that you have successfully used Revisionize with*
+
+= Known Issues =
+
+* Gutenberge. Revisionize is not compatible with the default Gutenberg editor. You must install the [Classic Editor](https://wordpress.org/plugins/classic-editor/) plugin. 
+* WP Recipe Maker. There have been reported issues that indicate Revisionize does not work with this plugin. However, we could not verify these reports. Use at your own risk. 
+* Some plugins store content in their own database tables, which Revisionize knows nothing about. It's possible that publishing a revision will not save changes for these types of plugins. Revisionize will only work with content stored in the `wp_posts` and `wp_postmeta` tables. 
 
 Please post in the support section for help before leaving a negative review!
 
@@ -41,6 +45,7 @@ Please post in the support section for help before leaving a negative review!
 
 = 2.3.1 =
 * Fix. Add missing i18n domain.
+* Improvement. Add Known Issues to readme.
 
 = 2.3.0 =
 * New. Setting to preserve original author or overwrite it with author who is revisionizing. 
