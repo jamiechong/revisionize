@@ -43,6 +43,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.3.2 = 
+* Fix. Work toward being translatable. 
+
 = 2.3.1 =
 * Fix. Add missing i18n domain.
 * Improvement. Add Known Issues to readme.

@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.1
+ Version: 2.3.2
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -112,7 +112,7 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
+  wp_die(__('Invalid Post ID', 'revisionize'));
 }
 
 function create_revision($post, $is_original=false) {
@@ -330,7 +330,7 @@ function post_button() {
       </a>
     </div>
   <?php else: ?>
-    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.', REVISIONIZE_I18N_DOMAIN), get_parent_editlink($parent, __('its original', REVISIONIZE_I18N_DOMAIN)))?></em></div>
+    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.', 'revisionize'), get_parent_editlink($parent, __('its original', 'revisionize')))?></em></div>
   <?php endif;
 }
 
@@ -338,7 +338,7 @@ function post_button() {
 function admin_actions($actions, $post) {
   if (is_create_enabled($post)) {
     $actions['create_revision'] = '<a href="'.get_create_link($post).'" title="'
-      . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
+      . esc_attr(__("Create a Revision", 'revisionize'))
       . '">' . get_create_button_text() . '</a>';
   }
   return $actions;
@@ -348,7 +348,7 @@ function admin_actions($actions, $post) {
 function post_status_label($states) {
   global $post;
   if (get_revision_of($post)) {
-    $label = is_original_post($post) ? __('Backup Revision', REVISIONIZE_I18N_DOMAIN) : __('Revision', REVISIONIZE_I18N_DOMAIN);
+    $label = is_original_post($post) ? __('Backup Revision', 'revisionize') : __('Revision', 'revisionize');
     $label = apply_filters('revisionize_post_status_label', $label);
     array_unshift($states, $label);
   }
@@ -362,7 +362,7 @@ function notice() {
   if ($screen->base == 'post' && $parent):
   ?>
   <div class="notice notice-warning">
-      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', REVISIONIZE_I18N_DOMAIN), get_parent_permalink($parent)); ?></p>
+      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', 'revisionize'), get_parent_permalink($parent)); ?></p>
   </div>
   <?php
   endif;
@@ -372,7 +372,7 @@ function notice() {
 function add_dashboard_widget() {
   wp_add_dashboard_widget(
     'revisionize-posts-needing-review',    // ID of the widget.
-    __('Revisionized Posts Needing Review', REVISIONIZE_I18N_DOMAIN),                // Title of the widget.
+    __('Revisionized Posts Needing Review', 'revisionize'),                // Title of the widget.
     __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
   );
 }
@@ -415,7 +415,7 @@ function admin_bar_item($admin_bar) {
       'title' => get_create_button_text(),
       'href' => get_create_link($post),
       'meta' => array(
-        'title' => esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN)),
+        'title' => esc_attr(__("Create a Revision", 'revisionize')),
       ),
     ));
   }
@@ -483,7 +483,7 @@ function get_create_link($post) {
 }
 
 function get_create_button_text() {
-  return apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN));
+  return apply_filters('revisionize_create_revision_button_text', __('Revisionize', 'revisionize'));
 }
 
 function get_parent_editlink($parent, $s=null) {
