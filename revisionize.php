@@ -39,7 +39,7 @@ add_action('init', __NAMESPACE__.'\\init');
 function init() {
   // Only add filters and actions for admin who can actually edit posts
   if (is_admin() && user_can_revisionize() && is_post_type_enabled()) {
-    add_filter('display_post_states', __NAMESPACE__.'\\post_status_label');
+    add_filter('display_post_states', __NAMESPACE__.'\\post_status_label', 10, 2);
     add_filter('post_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
     add_filter('page_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
 
@@ -345,9 +345,8 @@ function admin_actions($actions, $post) {
 }
 
 // Filter for display_post_states which is only added if user_can_revisionize
-function post_status_label($states) {
-  global $post;
-  if (get_revision_of($post)) {
+function post_status_label($states, $post) {
+  if (!empty($post) && get_revision_of($post)) {
     $label = is_original_post($post) ? __('Backup Revision', 'revisionize') : __('Revision', 'revisionize');
     $label = apply_filters('revisionize_post_status_label', $label);
     array_unshift($states, $label);
