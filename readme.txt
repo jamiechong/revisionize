@@ -43,6 +43,9 @@ Please post in the support section for help before leaving a negative review!
 
 == Changelog ==
 
+= 2.3.3 =
+* Fix. Remove PHP Notice on the admin menu editor screen
+
 = 2.3.2 = 
 * Fix. Work toward being translatable. 
 
