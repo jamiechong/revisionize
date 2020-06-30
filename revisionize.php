@@ -268,7 +268,7 @@ function copy_post_taxonomies($new_id, $post) {
     // Clear default category (added by wp_insert_post)
     wp_set_object_terms($new_id, NULL, 'category');
 
-    $taxonomies = get_object_taxonomies($post->post_type);
+    $taxonomies = apply_filters('revisionize_allowed_copy_post_taxonomies', get_object_taxonomies($post->post_type));
 
     foreach ($taxonomies as $taxonomy) {
       $post_terms = wp_get_object_terms($post->ID, $taxonomy, array('orderby' => 'term_order'));
