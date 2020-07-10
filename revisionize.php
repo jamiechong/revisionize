@@ -159,7 +159,7 @@ function publish($post, $original) {
       exit;
     }
 
-    if (is_ajax()) {
+    if (is_ajax() && apply_filters('revisionize_allow_ajax_reload', true)) {
       echo "<script type='text/javascript'>location.reload();</script>";
     }
   }
