@@ -1,0 +1,20 @@
+{
+  "name": "thefrosty/revisionize",
+  "type": "wordpress-plugin",
+  "description": "Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.",
+  "license": "GPL",
+  "authors": [
+    {
+      "name": "Jamie Chong",
+      "homepage": "https://revisionize.pro"
+    },
+    {
+      "name": "Austin Passy",
+      "email": "thefrosty@users.noreply.github.com",
+      "homepage": "https://austin.passy.co"
+    }
+  ],
+  "config": {
+    "optimize-autoloader": true,
+  }
+}
