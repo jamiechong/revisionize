@@ -493,9 +493,11 @@ function get_parent_permalink($parent) {
   return sprintf('<a href="%s" target="_blank">%s</a>', get_permalink($parent->ID), $parent->post_title);
 }
 
-function get_parent_post($post) {
-  $id = $post ? get_revision_of($post) : false;
-  return $id ? get_post($id) : false;
+if ( ! function_exists( 'get_parent_post' ) ) {
+  function get_parent_post($post) {
+    $id = $post ? get_revision_of($post) : false;
+    return $id ? get_post($id) : false;
+  }
 }
 
 function get_current_post_type() {
