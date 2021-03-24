@@ -3,13 +3,13 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.5
+ Version: 2.3.6
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
  */
 
-/*  
+/*
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
