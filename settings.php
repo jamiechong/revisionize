@@ -336,7 +336,7 @@ function get_available_addons() {
   $addons = get_transient('revisionize_available_addons');
 
   if ($addons === false) {
-    $response = wp_remote_get("https://revisionize.pro/rvz-addons/");
+    $response = wp_remote_get("https://revisionize.pro/rvz-addons/", array('timeout' => 1, 'httpversion' => '1.1'));
     $json = is_array($response) && !empty($response['body']) ? $response['body'] : '';
     $payload = !empty($json) ? json_decode($json, true) : array();
     $addons = !empty($payload['addons']) ? $payload['addons'] : array();
