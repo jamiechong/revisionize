@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.6
+ Version: 2.3.4
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -39,7 +39,7 @@ add_action('init', __NAMESPACE__.'\\init');
 function init() {
   // Only add filters and actions for admin who can actually edit posts
   if (is_admin() && user_can_revisionize() && is_post_type_enabled()) {
-    add_filter('display_post_states', __NAMESPACE__.'\\post_status_label');
+    add_filter('display_post_states', __NAMESPACE__.'\\post_status_label', 10, 2);
     add_filter('post_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
     add_filter('page_row_actions', __NAMESPACE__.'\\admin_actions', 10, 2);
 
@@ -112,7 +112,7 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', REVISIONIZE_I18N_DOMAIN));
+  wp_die(__('Invalid Post ID', 'revisionize'));
 }
 
 function create_revision($post, $is_original=false) {
@@ -182,10 +182,13 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
   $author_id = $post->post_author;
   $post_status = $post->post_status;
 
-  if ($to) {
+  if (!$to) {
+    $post_status = $status;
+  }
+
+  if ($to && is_original_author_preserved($to->ID)) {
     $author_id = $to->post_author;  // maintain original author.
   } else {
-    $post_status = $status;
     $author = wp_get_current_user();
     
     // If we're creating a backup copy of the original and a cron task
@@ -327,7 +330,7 @@ function post_button() {
       </a>
     </div>
   <?php else: ?>
-    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.'), get_parent_editlink($parent, __('its original')))?></em></div>
+    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.', 'revisionize'), get_parent_editlink($parent, __('its original', 'revisionize')))?></em></div>
   <?php endif;
 }
 
@@ -335,17 +338,16 @@ function post_button() {
 function admin_actions($actions, $post) {
   if (is_create_enabled($post)) {
     $actions['create_revision'] = '<a href="'.get_create_link($post).'" title="'
-      . esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN))
+      . esc_attr(__("Create a Revision", 'revisionize'))
       . '">' . get_create_button_text() . '</a>';
   }
   return $actions;
 }
 
 // Filter for display_post_states which is only added if user_can_revisionize
-function post_status_label($states) {
-  global $post;
-  if (get_revision_of($post)) {
-    $label = is_original_post($post) ? __('Backup Revision', REVISIONIZE_I18N_DOMAIN) : __('Revision', REVISIONIZE_I18N_DOMAIN);
+function post_status_label($states, $post) {
+  if (!empty($post) && get_revision_of($post)) {
+    $label = is_original_post($post) ? __('Backup Revision', 'revisionize') : __('Revision', 'revisionize');
     $label = apply_filters('revisionize_post_status_label', $label);
     array_unshift($states, $label);
   }
@@ -359,7 +361,7 @@ function notice() {
   if ($screen->base == 'post' && $parent):
   ?>
   <div class="notice notice-warning">
-      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', REVISIONIZE_I18N_DOMAIN), get_parent_permalink($parent)); ?></p>
+      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', 'revisionize'), get_parent_permalink($parent)); ?></p>
   </div>
   <?php
   endif;
@@ -369,7 +371,7 @@ function notice() {
 function add_dashboard_widget() {
   wp_add_dashboard_widget(
     'revisionize-posts-needing-review',    // ID of the widget.
-    __('Revisionized Posts Needing Review'),                // Title of the widget.
+    __('Revisionized Posts Needing Review', 'revisionize'),                // Title of the widget.
     __NAMESPACE__.'\\do_dashboard_widget'  // Callback.
   );
 }
@@ -412,7 +414,7 @@ function admin_bar_item($admin_bar) {
       'title' => get_create_button_text(),
       'href' => get_create_link($post),
       'meta' => array(
-        'title' => esc_attr(__("Create a Revision", REVISIONIZE_I18N_DOMAIN)),
+        'title' => esc_attr(__("Create a Revision", 'revisionize')),
       ),
     ));
   }
@@ -463,6 +465,10 @@ function is_post_date_preserved($id) {
   return apply_filters('revisionize_preserve_post_date', true, $id) === true;
 }
 
+function is_original_author_preserved($id) {
+  return apply_filters('revisionize_preserve_author', true, $id) === true;  
+}
+
 function show_dashboard_widget() {
   return apply_filters('revisionize_show_dashboard_widget', false);
 }
@@ -476,7 +482,7 @@ function get_create_link($post) {
 }
 
 function get_create_button_text() {
-  return apply_filters('revisionize_create_revision_button_text', __('Revisionize', REVISIONIZE_I18N_DOMAIN));
+  return apply_filters('revisionize_create_revision_button_text', __('Revisionize', 'revisionize'));
 }
 
 function get_parent_editlink($parent, $s=null) {
