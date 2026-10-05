@@ -19,6 +19,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Revisionize;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 require_once 'addon.php';
 
 add_action('init', __NAMESPACE__.'\\settings_init');
@@ -99,7 +103,7 @@ function network_update_settings() {
   on_settings_saved();
 
     if (isset($_POST['revisionize_network_settings'])) {
-    update_site_option('revisionize_network_settings', $_POST['revisionize_network_settings']);  
+    update_site_option('revisionize_network_settings', wp_unslash($_POST['revisionize_network_settings']));  
   }
 
   // need to schedule  an admin notice. 
@@ -110,7 +114,7 @@ function network_update_settings() {
 
 function settings_page() {
   if (!current_user_can('manage_options')) {
-    echo __('Not Allowed.', 'revisionize');
+    esc_html_e('Not Allowed.', 'revisionize');
     return;
   }
   ?>
@@ -143,14 +147,14 @@ function settings_page() {
 
 function network_settings_page() {
   if (!current_user_can('manage_network_options')) {
-    echo __('Not Allowed.', 'revisionize');
+    esc_html_e('Not Allowed.', 'revisionize');
     return;
   }
   ?>
   <div class="wrap">
     <?php settings_css(); ?>
     <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-    <p>Note that site specific settings for Revisionize can be found when viewing a site. Such as <a href="<?php echo admin_url('options-general.php?page=revisionize')?>">here</a>.</p>
+    <p>Note that site specific settings for Revisionize can be found when viewing a site. Such as <a href="<?php echo esc_url(admin_url('options-general.php?page=revisionize'))?>">here</a>.</p>
 
     <form action="edit.php?action=revisionize_network_settings" enctype="multipart/form-data" method="post" class="rvz-settings-form">
     <?php
@@ -196,8 +200,8 @@ function settings_addon_file_html($args) {
   $id = esc_attr($args['label_for']);
   ?>
   <div>
-    <input id="<?php echo $id?>" type="file" name="revisionize_addon_file" style="width:320px" accept=".rvz"/> 
-    <p>To install or update an addon, choose a <em>.rvz</em> file and click <em><?php echo save_settings_button_label()?></em></p>
+    <input id="<?php echo esc_attr($id)?>" type="file" name="revisionize_addon_file" style="width:320px" accept=".rvz"/> 
+    <p>To install or update an addon, choose a <em>.rvz</em> file and click <em><?php echo esc_html(save_settings_button_label())?></em></p>
   </div>  
   <?php  
 }
@@ -205,7 +209,7 @@ function settings_addon_file_html($args) {
 function addons_html() {
   $hasUpdates = false;
   ?>
-  <h1><?php _e('Revisionize Addons', 'revisionize')?></h1>
+  <h1><?php esc_html_e('Revisionize Addons', 'revisionize')?></h1>
   <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="https://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
   <div class="rvz-addons rvz-cf">
     <?php foreach (get_available_addons() as $addon) {
@@ -223,33 +227,33 @@ function addons_html() {
 
 function addon_html($addon) {
   $id = $addon['id'];
-  $active = "addon_${id}_active";
-  $remove = "addon_${id}_delete";
+  $active = "addon_{$id}_active";
+  $remove = "addon_{$id}_delete";
   $active_checked = is_addon_active($id) ? 'checked' : '';
   $group = is_multisite() ? "revisionize_network_settings" : "revisionize_settings";
   ?>
   <div class="rvz-addon-col">
     <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
-      <h3><a href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['name'];?></a></h3>
-      <?php echo $addon['description']; ?>
+      <h3><a href="<?php echo esc_url($addon['url'])?>" target="_blank"><?php echo esc_html($addon['name']);?></a></h3>
+      <?php echo wp_kses_post($addon['description']); ?>
       <div class="rvz-meta rvz-cf">
       <?php if ($addon['installed']): ?>
-        <label><?php _e('Installed', 'revisionize')?>: <?php echo $addon['installed']?></label>
+        <label><?php esc_html_e('Installed', 'revisionize')?>: <?php echo esc_html($addon['installed'])?></label>
         <label>
-          <input type="hidden" name="<?php echo $group?>[_<?php echo $active?>_set]" value="1"/>
-          <input type="checkbox" name="<?php echo $group?>[<?php echo $active?>]" <?php echo $active_checked?> /> <?php _e('Active', 'revisionize')?>
+          <input type="hidden" name="<?php echo esc_attr($group)?>[_<?php echo esc_attr($active)?>_set]" value="1"/>
+          <input type="checkbox" name="<?php echo esc_attr($group)?>[<?php echo esc_attr($active)?>]" <?php checked($active_checked, 'checked')?> /> <?php esc_html_e('Active', 'revisionize')?>
         </label>
         <label>
-          <input type="hidden" name="<?php echo $group?>[_<?php echo $remove?>_set]" value="1"/>
-          <input type="checkbox" name="<?php echo $group?>[<?php echo $remove?>]" /> <?php _e('Delete', 'revisionize')?>
+          <input type="hidden" name="<?php echo esc_attr($group)?>[_<?php echo esc_attr($remove)?>_set]" value="1"/>
+          <input type="checkbox" name="<?php echo esc_attr($group)?>[<?php echo esc_attr($remove)?>]" /> <?php esc_html_e('Delete', 'revisionize')?>
         </label>
         <?php if ($addon["update_available"]): ?>
         <div class="rvz-update-available rvz-cf">
-          <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank"><?php _e('Update Available', 'revisionize')?>: <?php echo $addon['version']?></a>    
+          <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank"><?php esc_html_e('Update Available', 'revisionize')?>: <?php echo esc_html($addon['version'])?></a>    
         </div>
         <?php endif; ?>
       <?php else: ?>
-        <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['price']?> - <?php echo $addon['button']?></a>
+        <a class="rvz-button button" href="<?php echo esc_url($addon['url'])?>" target="_blank"><?php echo esc_html($addon['price'])?> - <?php echo esc_html($addon['button'])?></a>
       <?php endif; ?>
       </div>
     </div>
@@ -265,12 +269,18 @@ function get_setting($key, $default='', $multisite=false) {
 
 function set_setting($key, $value) {
   $settings = get_option('revisionize_settings');  
+  if (!is_array($settings)) {
+    $settings = array();
+  }
   $settings[$key] = $value;
   update_option('revisionize_settings', $settings);  
 }
 
 function remove_setting($keys, $multisite=false) {
   $settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');    
+  if (!is_array($settings)) {
+    $settings = array();
+  }
   if (!is_array($keys)) {
     $keys = array($keys);
   }
@@ -310,22 +320,27 @@ function install_addon($filename) {
   $data = json_decode(base64_decode($data), true);
 
   // TODO: check to see if addon already installed and if this version is newer. Maybe send warning if not (downgrading)
-  file_put_contents($target_path.'/'.$data['name'].'.php', base64_decode($data['code']));
+  // Keep the file inside the add-ons folder: the name comes from the uploaded file.
+  $name = is_array($data) && !empty($data['name']) ? sanitize_key($data['name']) : '';
+  if ($name === '' || empty($data['code'])) {
+    return;
+  }
+  file_put_contents($target_path.'/'.$name.'.php', base64_decode($data['code']));
 
   $installed = get_installed_addons();
-  $installed[] = $data['name'];
+  $installed[] = $name;
   set_installed_addons($installed);
 }
 
 function uninstall_addon($id, $file) {
   remove_setting(array(
-    "addon_${id}_active",
-    "addon_${id}_delete",
-    "_addon_${id}_active_set",
-    "_addon_${id}_delete_set",
+    "addon_{$id}_active",
+    "addon_{$id}_delete",
+    "_addon_{$id}_active_set",
+    "_addon_{$id}_delete_set",
   ), is_multisite());
   
-  unlink($file);
+  wp_delete_file($file);
 
   $installed = get_installed_addons();
   if (($key = array_search($id, $installed)) !== false) {
@@ -476,16 +491,16 @@ function field_input($args) {
       $value = 'checked';
     }
   } else {
-    $value = 'value="'.get_setting($key, $args['default']).'"';
+    $value = 'value="'.esc_attr(get_setting($key, $args['default'])).'"';
   }
   ?>
   <div>
     <?php if ($type=="checkbox"): ?>
-    <input type="hidden" name="revisionize_settings[_<?php echo $key?>_set]" value="1"/>
+    <input type="hidden" name="revisionize_settings[_<?php echo esc_attr($key)?>_set]" value="1"/>
     <?php endif; ?>
     <label>
-      <input id="<?php echo $id?>" type="<?php echo $type?>" name="revisionize_settings[<?php echo $key?>]" <?php echo $value?>/> 
-      <?php echo $args['description']?>
+      <input id="<?php echo esc_attr($id)?>" type="<?php echo esc_attr($type)?>" name="revisionize_settings[<?php echo esc_attr($key)?>]" <?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- 'checked' or an escaped value attribute. ?>/> 
+      <?php echo esc_html($args['description'])?>
     </label>
   </div>  
   <?php  
@@ -504,8 +519,8 @@ function is_checkbox_set($key, $multisite=false) {
 }
 
 function notify_new_settings() {
-  $notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.admin_url('options-general.php?page=revisionize').'">Check it out!</a></strong>';
-  echo '<div class="notice notice-info is-dismissible"><p>'.$notice.'</p></div>';  
+  $notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.esc_url(admin_url('options-general.php?page=revisionize')).'">Check it out!</a></strong>';
+  echo '<div class="notice notice-info is-dismissible"><p>'.wp_kses_post($notice).'</p></div>';  
 }
 
 function notify_updated_settings() {
@@ -515,7 +530,7 @@ function notify_updated_settings() {
 function notify_needs_update() {
   if (!is_on_settings_page() && !is_on_network_settings_page()) {
     $url = is_multisite() ? network_admin_url('settings.php?page=revisionize') : admin_url('options-general.php?page=revisionize');
-    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.$url.'">View settings</a> for details.</p></div>';    
+    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.esc_url($url).'">View settings</a> for details.</p></div>';    
   }
 }
 

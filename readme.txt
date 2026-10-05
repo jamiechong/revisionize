@@ -1,9 +1,9 @@
 === Revisionize ===
 Contributors: jamiechong
-Tags: revision, schedule, cron, staging, variation, publishing, content, stage
+Tags: revision, schedule, staging, publishing, content
 Requires at least: 4.6
-Tested up to: 5.2.2
-Stable tag: trunk
+Tested up to: 7.1
+Stable tag: 2.3.5
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -13,10 +13,6 @@ Draft up revisions of live, published content. The live content doesn't change u
 == Description ==
 
 On a busy site you can't afford to make changes to *live*, *published* posts without reviewing and approving them first. **Revisionize** clones your post, page or CPT to a draft that gives you the freedom to tweak, edit and experiment with the content. Preview your drafted changes and/or [share the preview](https://wordpress.org/plugins/public-post-preview/) with a 3rd party to approve the changes. When you're happy, publish the revision, which will copy your content changes to the original post. Alternatively, schedule the revision to publish your content at a specific time. 
-
-= Official Addons =
-
-Visit [revisionize.pro](https://revisionize.pro) to add functionality that makes Revisionize even more powerful. 
 
 = Compatible with =
 
@@ -42,6 +38,16 @@ Please post in the support section for help before leaving a negative review!
 5. The original post is kept around as a revision just in case you want to revert back to the way things were. 
 
 == Changelog ==
+
+= 2.3.5 =
+* Fix. Backslashes in post content and custom fields were stripped when creating or publishing a revision. This corrupted block editor markup (for example `\u002d` in block attributes), code snippets and JSON stored in post meta.
+* Fix. PHP 8.1 and 8.2 deprecation notices in the settings code.
+* Improvement. Escape output in the admin UI and settings page.
+* Improvement. Uploaded add-on file names are sanitized so the file stays inside the add-ons folder.
+* Improvement. Tested up to WordPress 7.1.
+
+= 2.3.4 =
+* Improvement. Reduce the add-on list request timeout to 1 second and cache failures longer (props thefrosty).
 
 = 2.3.3 =
 * Fix. Remove PHP Notice on the admin menu editor screen

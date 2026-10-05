@@ -3,10 +3,12 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.4
+ Version: 2.3.5
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
+ License: GPLv3 or later
+ License URI: http://www.gnu.org/licenses/gpl-3.0.html
  */
 
 /*
@@ -26,6 +28,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 namespace Revisionize;
+
+if (!defined('ABSPATH')) {
+  exit;
+}
 
 define('REVISIONIZE_I18N_DOMAIN', 'revisionize');
 define('REVISIONIZE_ROOT', dirname(__FILE__));
@@ -112,7 +118,7 @@ function create() {
   }
 
   // if we didn't redirect out, then we fail.
-  wp_die(__('Invalid Post ID', 'revisionize'));
+  wp_die(esc_html__('Invalid Post ID', 'revisionize'));
 }
 
 function create_revision($post, $is_original=false) {
@@ -239,7 +245,8 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
     $revision_before = get_latest_wp_revision($new_id);
 
-    wp_update_post($data);
+    // wp_update_post() unslashes its input, so slash it or backslashes in content are lost.
+    wp_update_post(wp_slash($data));
 
     $revision_after = get_latest_wp_revision($new_id);
 
@@ -251,7 +258,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
       kses_init_filters();
     }
   } else {
-    $new_id = wp_insert_post($data);
+    $new_id = wp_insert_post(wp_slash($data));
   }
 
   copy_post_taxonomies($new_id, $post);
@@ -305,7 +312,8 @@ function copy_post_meta_info($new_id, $post) {
       $meta_values = get_post_custom_values($meta_key, $post->ID);
       foreach ($meta_values as $meta_value) {
         $meta_value = maybe_unserialize($meta_value);
-        add_metadata('post', $new_id, $meta_key, $meta_value);
+        // add_metadata() unslashes its input, so slash it or backslashes in JSON meta are lost.
+        add_metadata('post', $new_id, $meta_key, wp_slash($meta_value));
       }
     }
   }
@@ -326,11 +334,14 @@ function post_button() {
   if (!$parent): ?>
     <div style="text-align: right; margin-bottom: 10px;">
       <a class="button"
-        href="<?php echo get_create_link($post) ?>"><?php echo get_create_button_text(); ?>
+        href="<?php echo esc_url(get_create_link($post)) ?>"><?php echo esc_html(get_create_button_text()); ?>
       </a>
     </div>
   <?php else: ?>
-    <div><em><?php echo sprintf(__('WARNING: Publishing this revision will overwrite %s.', 'revisionize'), get_parent_editlink($parent, __('its original', 'revisionize')))?></em></div>
+    <div><em><?php
+      /* translators: %s: link to the original post */
+      echo wp_kses_post(sprintf(esc_html__('WARNING: Publishing this revision will overwrite %s.', 'revisionize'), get_parent_editlink($parent, __('its original', 'revisionize'))));
+    ?></em></div>
   <?php endif;
 }
 
@@ -361,7 +372,10 @@ function notice() {
   if ($screen->base == 'post' && $parent):
   ?>
   <div class="notice notice-warning">
-      <p><?php echo sprintf(__('Currently editing a revision of %s. Publishing this post will overwrite it.', 'revisionize'), get_parent_permalink($parent)); ?></p>
+      <p><?php
+        /* translators: %s: link to the original post */
+        echo wp_kses_post(sprintf(esc_html__('Currently editing a revision of %s. Publishing this post will overwrite it.', 'revisionize'), get_parent_permalink($parent)));
+      ?></p>
   </div>
   <?php
   endif;
@@ -390,16 +404,16 @@ function do_dashboard_widget() {
     ));
 
   if (empty($posts)) {
-    _e('No posts need reviewed at this time!', 'revisionize');
+    esc_html_e('No posts need reviewed at this time!', 'revisionize');
   }
 
   echo '<ul>';
 
   foreach ($posts as $post) {
     printf('<li><a href="%s">%s</a> - %s</li>',
-      get_edit_post_link($post->ID),
-      get_the_title($post->ID),
-      get_the_author_meta('nicename', $post->post_author)
+      esc_url(get_edit_post_link($post->ID)),
+      esc_html(get_the_title($post->ID)),
+      esc_html(get_the_author_meta('nicename', $post->post_author))
     );
   }
 
@@ -486,11 +500,11 @@ function get_create_button_text() {
 }
 
 function get_parent_editlink($parent, $s=null) {
-  return sprintf('<a href="%s">%s</a>', get_edit_post_link($parent->ID), $s ? $s : $parent->post_title);
+  return sprintf('<a href="%s">%s</a>', esc_url(get_edit_post_link($parent->ID)), esc_html($s ? $s : $parent->post_title));
 }
 
 function get_parent_permalink($parent) {
-  return sprintf('<a href="%s" target="_blank">%s</a>', get_permalink($parent->ID), $parent->post_title);
+  return sprintf('<a href="%s" target="_blank">%s</a>', esc_url(get_permalink($parent->ID)), esc_html($parent->post_title));
 }
 
 function get_parent_post($post) {

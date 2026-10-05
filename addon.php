@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 abstract class RevisionizeAddon {
   abstract function name();
   abstract function version();
